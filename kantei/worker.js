@@ -12,6 +12,8 @@
     OPENAI_MODEL     … 使うモデル（なくてもOK。初期値 gpt-5.4-mini）
 */
 
+import { handleArena } from './arena.js';
+
 const STATS = ['attack', 'defense', 'hp', 'speed'];
 
 const MAX_BODY = 1_500_000; // 約1.5MBまで
@@ -24,7 +26,7 @@ export default {
     const originOk = allowed.length > 0 && allowed.includes(origin);
     const cors = {
       'Access-Control-Allow-Origin': originOk ? origin : 'null',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400',
       Vary: 'Origin',
@@ -33,8 +35,13 @@ export default {
       new Response(JSON.stringify(obj), { status, headers: { ...cors, 'Content-Type': 'application/json; charset=utf-8' } });
 
     if (request.method === 'OPTIONS') return new Response(null, { status: originOk ? 204 : 403, headers: cors });
-    if (request.method !== 'POST') return reply({ error: 'POST only' }, 405);
     if (!originOk) return reply({ error: 'origin not allowed' }, 403);
+    const path = new URL(request.url).pathname;
+    if (path.startsWith('/arena/')) {
+      try { return await handleArena(request, env, reply, path); }
+      catch (e) { return reply({ error: 'arena error' }, 500); }
+    }
+    if (request.method !== 'POST') return reply({ error: 'POST only' }, 405);
     if (!env.OPENAI_API_KEY) return reply({ error: 'server not configured' }, 500);
 
     const raw = await request.text();
