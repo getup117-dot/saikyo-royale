@@ -198,7 +198,7 @@ export async function handleArena(request, env, reply, path) {
     return reply({ ok: true });
   }
 
-  if (path === '/arena/delete') {
+  if (path === '/arena/unpublish' || path === '/arena/delete') {
     const id = String(body.id || '');
     const key = String(body.key || '');
     if (!/^[a-z0-9]{6,32}$/.test(id) || !/^[a-f0-9]{32}$/.test(key)) return reply({ error: 'bad request' }, 400);

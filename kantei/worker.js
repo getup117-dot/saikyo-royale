@@ -35,6 +35,11 @@ export default {
       new Response(JSON.stringify(obj), { status, headers: { ...cors, 'Content-Type': 'application/json; charset=utf-8' } });
 
     if (request.method === 'OPTIONS') return new Response(null, { status: originOk ? 204 : 403, headers: cors });
+    if (request.method === 'GET' && new URL(request.url).pathname === '/arena/health') {
+      let db = false;
+      try { await env.DB.prepare('SELECT 1').first(); db = true; } catch {}
+      return new Response(JSON.stringify({ db, openai_key: !!env.OPENAI_API_KEY, origins: (env.ALLOWED_ORIGINS || '').split(',').length }), { headers: { 'Content-Type': 'application/json' } });
+    }
     if (!originOk) return reply({ error: 'origin not allowed' }, 403);
     const path = new URL(request.url).pathname;
     if (path.startsWith('/arena/')) {

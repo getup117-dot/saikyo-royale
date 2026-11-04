@@ -269,6 +269,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .hidbadge.onl{background:#1f6fb8}
 .sp.author{color:#9cc2ff;font-size:11px}
 .ccard .arena{font-size:11px;color:#9cc2ff;margin-top:4px;line-height:1.5}.ccard .arena b{color:#ffcf3a}
+.pubbtn.off{background:#4a4d55;margin-top:4px}
 .pubbtn{margin-top:6px;background:#1f6fb8;color:#fff;border:2px solid var(--line);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;font-weight:700}
 .linkbtn{background:none;border:0;color:#a9a59b;font:inherit;font-size:12px;text-decoration:underline;padding:4px}
 .release{position:relative;width:220px;height:220px;margin:0 auto;display:flex;align-items:center;justify-content:center}
@@ -543,7 +544,7 @@ function loadUnlocked(){try{const v=JSON.parse(localStorage.getItem(UNLOCK_KEY)|
 function saveUnlocked(a){try{localStorage.setItem(UNLOCK_KEY,JSON.stringify(a))}catch(e){}}
 function prepHidden(h){return Object.assign({},h,{builtin:true,hidden:true,fx:h.fx||detectFx(h.special),type:h.type||'balance'})}
 function lockedHidden(){const u=loadUnlocked();return HIDDEN.filter(h=>!u.includes(h.id)).map(prepHidden)}
-function randomCpu(exclude){const prev=S.lastCpu;const pool=S.chars.concat(lockedHidden(),lockedOnline());let p=pool.filter(c=>c.id!==exclude);if(p.length>2)p=p.filter(c=>c.id!==prev);const a=p.length?p:pool;const c=a[rnd(a.length)];S.lastCpu=c.id;return c}
+function randomCpu(exclude){const prev=S.lastCpu;const pool=S.chars.concat(lockedHidden(),lockedOnline());let p=pool.filter(c=>c.id!==exclude);if(p.length>2)p=p.filter(c=>c.id!==prev);const a=p.length?p:pool.length?pool:(S.samples||[]);const c=a[rnd(a.length)];S.lastCpu=c.id;return c}
 function loadRecs(){try{const v=JSON.parse(localStorage.getItem(REC_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(e){return {}}}
 function saveRecs(r){try{localStorage.setItem(REC_KEY,JSON.stringify(r))}catch(e){}}
 function recOf(id){const r=loadRecs()[id]||{};return {w:r.w|0,l:r.l|0,d:r.d|0,titles:Array.isArray(r.titles)?r.titles:[]}}
@@ -571,6 +572,7 @@ S.online=[];S.onlineOk=false;
 async function loadOnline(){if(!ARENA)return;try{const r=await arenaReq('/list');S.online=(r.chars||[]).map(onlineChar);S.onlineOk=true}catch(e){S.onlineOk=false}
   if(S.onlineOk&&bestStreak()>lsGet(SENT_KEY,0))sendStreak()}
 const SENT_KEY='saikyo_royale_streak_sent_v1';
+const REMOVED_KEY='saikyo_royale_removed_v1';
 function sendStreak(chName){if(!ARENA)return;const best=bestStreak();if(!best)return;
   arenaReq('/streak',{key:ownerKey(),name:lsGet(AUTHOR_KEY,''),best,ch:chName||lsGet('saikyo_royale_best_ch_v1','')}).then(()=>lsSet(SENT_KEY,best)).catch(()=>{})}
 async function myWho(){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('saikyo:'+ownerKey()));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,10)}
@@ -781,7 +783,7 @@ const RULES_HTML=`<div class="panel" style="font-weight:500;font-size:14px;line-
 /* ========= tutorial ========= */
 const TUT_CPU={1:['R','S','P','R','P','S'],2:['P','R','X','S','R','P']};
 function startTutorial(back=showHome){
-  const c0=S.chars.find(c=>c.id==='s1')||S.chars[0],c1=S.chars.find(c=>c.id==='s2')||S.chars[1]||S.chars[0];
+  const SM=S.samples||S.chars;const c0=SM.find(c=>c.id==='s1')||SM[0],c1=SM.find(c=>c.id==='s2')||SM[1]||SM[0];
   S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:true,cpuLevel:'weak',tut:true,tutBack:back,
     stats:[{mikiri:0,maxCombo:0,specialFinish:false,behind:false},{mikiri:0,maxCombo:0,specialFinish:false,behind:false}],hands:[null,null]};
   const M=S.match;setFacing(M).then(()=>{if(S.match===M)showPrep()});
@@ -851,8 +853,8 @@ function exportChars(){
 }
 function arenaHTML(c){if(!ARENA||c.builtin||c.online)return '';const oid=uploaded()[c.id];
   if(!oid)return `<button class="pubbtn" data-pub="${c.id}">🌐 みんなに公開</button>`;
-  const o=S.online.find(x=>x.oid===oid);if(!o)return '<div class="arena muted">🌐 公開中</div>';
-  const rank=arenaRank().indexOf(o)+1;return `<div class="arena">🌐 みんなの戦績 <b>${o.w}勝</b> ${o.l}敗${rank?`<br>ランキング ${rank}位`:''}</div>`}
+  const o=S.online.find(x=>x.oid===oid);if(!o)return `<div class="arena muted">🌐 公開中</div><button class="pubbtn off" data-unpub="${c.id}">公開をやめる</button>`;
+  const rank=arenaRank().indexOf(o)+1;return `<div class="arena">🌐 みんなの戦績 <b>${o.w}勝</b> ${o.l}敗${rank?`<br>ランキング ${rank}位`:''}</div><button class="pubbtn off" data-unpub="${c.id}">公開をやめる</button>`}
 function publishChar(c,after){
   if(uploaded()[c.id]){toast('もう公開している');return}
   const m=document.createElement('div');m.className='modal';
@@ -920,17 +922,26 @@ function showOnlinePick(){
     bindBack(d2,()=>showSelect(0));thumbs(d2);
     $$('[data-oid]',d2).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.oid===b.dataset.oid)||S.online.find(x=>x.oid===b.dataset.oid);if(!c)return;S.cpuPick=c;S.pick[1]=c.id;startMatch()})})}
 function showZukan(){
-  const d=screen(hdr('キャラ一覧')+`<div class="grid">${S.chars.map(c=>`<div class="ccard">${c.hidden?'<span class="hidbadge">隠れキャラ</span>':''}${c.online?`<span class="hidbadge onl">🌐 ${esc(c.author||'だれか')}さん作</span>`:''}<div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${esc(statsOf(c).n)}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${recHTML(c.id)}${arenaHTML(c)}${c.builtin&&!c.online?'':`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
+  const d=screen(hdr('キャラ一覧')+`<div class="grid">${S.chars.map(c=>`<div class="ccard">${c.hidden?'<span class="hidbadge">隠れキャラ</span>':''}${c.online?`<span class="hidbadge onl">🌐 ${esc(c.author||'だれか')}さん作</span>`:''}<div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${esc(statsOf(c).n)}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${recHTML(c.id)}${arenaHTML(c)}${`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
     <button class="ccard newcard" data-new><b>＋</b>キャラをつくる</button></div>
-    ${S.chars.some(c=>!c.builtin)?'<button class="btn gray small" data-export>📤 自作キャラを書き出す</button>':''}`,'dim');
+    ${S.chars.some(c=>!c.builtin)?'<button class="btn gray small" data-export>📤 自作キャラを書き出す</button>':''}
+    ${lsGet(REMOVED_KEY,[]).length?'<button class="linkbtn" data-restore>消した「最初からいるキャラ」を元に戻す</button>':''}`,'dim');
   bindBack(d,showHome);
   $('[data-new]',d).onclick=()=>showCreate();
   {const ex=$('[data-export]',d);if(ex)ex.onclick=()=>exportChars()}
   $$('[data-pub]',d).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.id===b.dataset.pub);if(c)publishChar(c,()=>showZukan())});
+  $$('[data-unpub]',d).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.id===b.dataset.unpub);const oid=c&&uploaded()[c.id];if(!oid)return;
+    confirmModal(`「${c.name}」の公開をやめる？（みんなの闘技場から消える。自分のキャラ一覧には残る）`,'公開をやめる',()=>{
+      arenaReq('/unpublish',{id:oid,key:ownerKey()}).then(()=>{const u=uploaded();delete u[c.id];lsSet(UPL_KEY,u);S.online=S.online.filter(x=>x.oid!==oid);toast('公開をやめた');showZukan()}).catch(()=>toast('いまはできなかった。あとでもう一度'))})});
+  {const rs=$('[data-restore]',d);if(rs)rs.onclick=()=>{const rm=lsGet(REMOVED_KEY,[]);lsSet(REMOVED_KEY,[]);const back=(S.samples||[]).filter(c=>rm.includes(c.id)&&!S.chars.some(x=>x.id===c.id));S.chars=back.concat(S.chars);toast('最初からいるキャラを元に戻した');showZukan()}}
   $$('[data-del]',d).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.id===b.dataset.del);
-    const oid=!c.online&&uploaded()[c.id];
-    confirmModal(oid?`「${c.name}」を削除する？（みんなの闘技場からも取り下げる）`:`「${c.name}」を削除する？`,'削除',()=>{S.chars=S.chars.filter(x=>x!==c);
-      if(c.online){lsSet(ONL_KEY,onlineUnlocked().filter(x=>x.oid!==c.oid))}else saveUserChars();
+    if(S.chars.length<=1){toast('最後の1体は消せない');return}
+    const oid=!c.builtin&&uploaded()[c.id];
+    confirmModal(oid?`「${c.name}」を削除する？（みんなの闘技場からも取り下げる）`:c.builtin?`「${c.name}」をキャラ一覧から消す？${c.hidden||c.online?'（CPU戦でまた出会えば戻る）':'（あとで元に戻せる）'}`:`「${c.name}」を削除する？`,'削除',()=>{S.chars=S.chars.filter(x=>x!==c);
+      if(c.online){lsSet(ONL_KEY,onlineUnlocked().filter(x=>x.oid!==c.oid))}
+      else if(c.hidden){saveUnlocked(loadUnlocked().filter(x=>x!==c.id))}
+      else if(c.builtin){const rm=lsGet(REMOVED_KEY,[]);if(!rm.includes(c.id))rm.push(c.id);lsSet(REMOVED_KEY,rm)}
+      else saveUserChars();
       if(oid){arenaReq('/delete',{id:oid,key:ownerKey()}).catch(()=>{});const u=uploaded();delete u[c.id];lsSet(UPL_KEY,u);S.online=S.online.filter(x=>x.oid!==oid)}
       {const R=loadRecs();delete R[c.id];saveRecs(R)}showZukan()})});
 }
@@ -1478,10 +1489,11 @@ function showCreated(ch,onDone){
 (async function boot(){
   app.innerHTML='<div class="screen" style="align-items:center;justify-content:center"><img src="'+AS.emblem+'" style="width:120px;opacity:.8" alt=""><div class="muted">召喚陣を展開中……</div></div>';
   initSample();
-  const samples=await buildSamples();
+  const samples=await buildSamples();S.samples=samples;
   {const u=loadUnlocked();S.chars=samples.concat(HIDDEN.filter(h=>u.includes(h.id)).map(prepHidden))}
   S.chars=S.chars.concat(onlineUnlocked().filter(c=>c&&c.img&&validStats(c.stats)).map(c=>Object.assign(c,{online:true,builtin:true,fx:detectFx(c.special||'')})));
   S.chars=S.chars.concat(loadUserChars().filter(c=>c&&c.img&&(TYPES[c.type]||validStats(c.stats))));
+  {const rm=lsGet(REMOVED_KEY,[]);S.chars=S.chars.filter(c=>!rm.includes(c.id))}
   showHome();loadOnline();
 })();
 window.__game={setMikiri:v=>MIKIRI_DMG=v,S,TYPES,normStats,normHands,statsOf,cleanKantei,typeFromCats,resolveTurn,detectFx,fxCandidates,typeFromFeatures,newFighter,cpuHands,setSpeed:v=>SPEED=v};
