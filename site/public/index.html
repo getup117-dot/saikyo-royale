@@ -91,7 +91,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pcard{background:var(--panel);border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink);border-radius:14px;padding:8px;text-align:center;position:relative}
 .ptag{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-family:var(--head);font-size:16px;padding:0 12px;border:2px solid var(--line);box-shadow:0 0 0 2px var(--ink);border-radius:6px}
 .ptag.p1{background:var(--blue)} .ptag.p2{background:var(--red)}
-.pcard img{width:100%;height:120px;object-fit:contain;margin-top:8px}
+.pcard img{width:100%;height:92px;object-fit:contain;margin-top:8px}
 .pcard .nm{font-size:13px;margin-top:4px;line-height:1.25}
 .pcard .sp{font-size:11px;color:#d8d3c6}
 .pcard .ty{font-size:12px;color:var(--amber);margin:2px 0}
@@ -217,13 +217,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .cutin.half .band .nm{font-size:clamp(18px,6vw,28px)}
 
 /* result */
-.ribbon{margin:10px auto 0;font-family:var(--head);font-size:56px;padding:4px 30px;background:linear-gradient(#2f63c4,#173a86);border:4px solid var(--line);box-shadow:0 0 0 3px var(--ink);transform:skewX(-10deg) rotate(-4deg);text-shadow:0 4px 0 #000}
+.ribbon{margin:6px auto 0;font-family:var(--head);font-size:44px;padding:2px 26px;background:linear-gradient(#2f63c4,#173a86);border:4px solid var(--line);box-shadow:0 0 0 3px var(--ink);transform:skewX(-10deg) rotate(-4deg);text-shadow:0 4px 0 #000}
 .ribbon.p2{background:linear-gradient(#d84a3d,#8e2018)} .ribbon.draw{background:linear-gradient(#666,#333)}
-.spot{position:relative;flex:1;min-height:220px;display:flex;align-items:flex-end;justify-content:center}
+.spot{position:relative;flex:1;min-height:150px;display:flex;align-items:flex-end;justify-content:center}
 .spot::before{content:"";position:absolute;left:50%;top:-10%;width:120%;height:115%;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 92%,rgba(255,240,200,.55),transparent 45%),linear-gradient(180deg,rgba(255,240,200,.18),transparent 70%);clip-path:polygon(40% 0,60% 0,95% 100%,5% 100%)}
 .spot .crowd{position:absolute;left:-16px;right:-16px;bottom:-6px;width:calc(100% + 32px);max-width:none;max-height:none;animation:cheer .5s ease-in-out infinite alternate;filter:none;z-index:1}
 @keyframes cheer{to{transform:translateY(-4px)}}
-.spot img.win{position:relative;z-index:2;max-width:70%;max-height:260px;object-fit:contain;filter:drop-shadow(0 10px 6px #000a);animation:bob 1.6s ease-in-out infinite}
+.spot img.win{position:relative;z-index:2;max-width:62%;max-height:200px;object-fit:contain;filter:drop-shadow(0 10px 6px #000a);animation:bob 1.6s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(-8px)}}
 .titles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .titles span{background:#2b2e36;border:2px solid var(--amber);border-radius:999px;padding:4px 14px;font-size:15px;color:var(--amber)}
@@ -662,11 +662,12 @@ function showHome(){
 }
 function showHowto(){
   const d=screen(hdr('決闘の掟')+`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
-    <p style="margin-top:0"><b>Ⅰ　召喚</b><br>紙に描いた戦士を撮影し、名と必殺技を刻め。その姿に宿る力は、AIが鑑定する。</p>
+    <p style="margin-top:0"><b>Ⅰ　召喚</b><br>紙に描いた戦士を撮影し、名と必殺技を刻め。その姿を読み解き、AIが能力（攻撃・防御・体力・すばやさに合計120）と拳の相性を定める。</p>
     <p><b>Ⅱ　六手を刻む</b><br>グー・チョキ・パーを六度選べ。猶予は約12秒。敵に手の内は見えない。</p>
     <p><b>Ⅲ　必殺技</b><br>第二ターンより解放。六手のどこにでも「必殺」を仕込める。1ターンに一度きり。あらゆる手を打ち破り50ダメージ。必殺技同士は相殺する。</p>
     <p><b>Ⅳ　見切り</b><br>速さで勝る者は、拮抗の刹那に「見切り」を放ち10ダメージを与える。速さの差10ごとに、1ターンの発動回数が1増える（最大3回）。</p>
-    <p style="margin-bottom:0"><b>Ⅴ　決着</b><br>敵のHPを0にするか、三ターン終了時に多くのHPを残した者が勝者となる。</p></div>`,'dim');
+    <p><b>Ⅴ　拳の相性</b><br>戦士にはグー・チョキ・パーの得手不得手がある。得意な手で勝てばダメージが増し、苦手な手では減る（3つの合計は0）。相手の相性は、手を選ぶ画面に示される。読め。</p>
+    <p style="margin-bottom:0"><b>Ⅵ　決着</b><br>敵のHPを0にするか、三ターン終了時に多くのHPを残した者が勝者となる。</p></div>`,'dim');
   bindBack(d,showHome);
 }
 function showZukan(){
@@ -726,7 +727,7 @@ function showPrep(){
   const d=screen(hdr('決戦前夜')+`<div class="versus">${card(A,0)}<div class="vsmall">VS</div>${card(B,1)}</div>
     <div class="muted" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}は見切り：1ターン${mikiriCount(A.t.s,B.t.s)}回まで`}</div>
     <div class="spacer"></div>
-    ${M.cpu?'':'<div class="panel handoff" style="padding:12px"><img class="hoimg" src="'+AS.handoff+'" alt=""><h3>スマホを1Pに渡す</h3></div>'}
+    ${M.cpu?'':'<div class="panel handoff" style="padding:8px;flex-direction:row;justify-content:center;gap:12px"><img class="hoimg" src="'+AS.handoff+'" alt="" style="width:84px"><h3 style="font-size:22px">スマホを1Pに渡す</h3></div>'}
     <button class="btn orange" data-ok>${M.cpu?'バトル開始':'準備OK'}</button>`,'dim');
   bindBack(d,()=>showSelect(1));
   $('[data-ok]',d).onclick=()=>beginTurn();
@@ -748,7 +749,7 @@ function showHandoff(side,next){
 function hpBarHTML(M){
   const side=(s)=>{const f=M.F[s];const p=f.hp/f.maxHp*100;const cls=p<25?'low':p<55?'mid':'';
     return `<div class="hpside ${s?'r':''}" data-side="${s}"><img src="${f.ch.img}" alt=""><div class="meta"><span class="tag p${s+1}">${sideTag(s,M)}</span>
-      <div class="hpnum"><small>HP</small><span data-hp>${f.hp}</span></div><div class="bar"><i data-bar class="${cls}" style="width:${p}%"></i></div><div class="markers" data-mk></div></div></div>`};
+      <div class="hpnum"><small>HP</small><span data-hp>${f.hp}</span></div><div class="bar"><i data-bar class="${cls}" style="width:${p}%"></i></div></div></div>`};
   return `<div class="hpbar">${side(0)}<div class="turnlbl">ターン<b data-turn>${M.turn}/3</b></div>${side(1)}</div>`;
 }
 function renderMarkers(root,M,mods){
@@ -989,7 +990,11 @@ function showResult(){
     if(st.mikiri>=2)titles.push('見切り王');
     if(f.taken===0)titles.push('パーフェクト王');
     if(st.behind)titles.push('大逆転の勇者');
-    if(!titles.length)titles.push('サイキョウの証');}
+    {const L=M.F[1-w];const ko=L.hp<=0;
+      if(ko&&M.turn<=2)titles.push('速攻の覇者');
+      if((st.strongHits||0)>=2)titles.push('拳を極めし者');
+      if(!ko&&f.hp-L.hp<=40)titles.push('紙一重の覇者');}
+    if(!titles.length)titles.push(pick(['サイキョウの証','新たなる覇者','戦場の支配者','不屈の戦士','闘技場の主']));}
   const wf=w>=0?M.F[w]:null;
   const d=screen(`<div class="ribbon ${w===1?'p2':w<0?'draw':''}">${w<0?'相打ち':sideTag(w,M)+' WIN!'}</div>
     <div class="spot">${w>=0?`<img class="win" src="${wf.ch.img}" alt="">`:`<img class="win" src="${A.ch.img}" alt="" style="max-width:45%"><img class="win" src="${B.ch.img}" alt="" style="max-width:45%">`}${w>=0?`<img class="crowd" src="${AS.crowd}" alt="">`:''}</div>
@@ -1075,12 +1080,11 @@ function createCut(C){
     C.final=exportImg(st);createInfo(C)};
 }
 function createInfo(C){
-  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div style="display:flex;justify-content:center"><img src="${C.final}" alt="" style="max-height:130px;max-width:55%;filter:drop-shadow(0 6px 4px #0009)"></div>
+  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div style="display:flex;justify-content:center"><img src="${C.final}" alt="" style="max-height:88px;max-width:45%;filter:drop-shadow(0 6px 4px #0009)"></div>
     <label class="fld"><b>名前</b><input data-name maxlength="12" placeholder="漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
-    <label class="fld"><b>設定<small>任意</small></b><textarea data-bio maxlength="60" rows="2" placeholder="火山の深淵に棲む竜。その翼は夜を裂く。">${esc(C.bio)}</textarea></label>
+    <label class="fld"><b>設定<small>任意・鑑定の手がかりになる</small></b><textarea data-bio maxlength="60" rows="2" placeholder="火山の深淵に棲む竜。その翼は夜を裂く。">${esc(C.bio)}</textarea></label>
     <label class="fld"><b>必殺技の名前</b><input data-sp maxlength="16" placeholder="獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
     <label class="fld"><b>必殺技の説明<small>任意</small></b><input data-desc maxlength="30" placeholder="全てを灰に還す、終焉の炎。" value="${esc(C.desc)}" autocomplete="off"></label>
-    <div class="muted" style="text-align:center">設定は、鑑定の手がかりとなる</div>
     <div class="spacer"></div><button class="btn orange" data-next>鑑定の儀へ ▶</button>`,'dim');
   bindBack(d,()=>createCut(C));
   const nm=$('[data-name]',d),bio=$('[data-bio]',d),sp=$('[data-sp]',d),ds=$('[data-desc]',d);
