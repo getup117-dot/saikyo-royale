@@ -174,6 +174,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .ghost{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;opacity:.3}
 .ghost img{max-width:100%;max-height:100%;object-fit:contain;filter:grayscale(.3)}
 .impact{position:absolute;width:160px;height:160px;margin:-80px 0 0 -80px;pointer-events:none;z-index:5}
+.pop.small{font-size:24px}
+.ccard .rec{font-size:13px;margin-top:3px}.ccard .rec b{color:var(--amber)}
+.ccard .rect{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:3px}.ccard .rect span{font-size:10px;background:#3a2c10;color:#f2c46b;border:1px solid #f2c46b88;border-radius:999px;padding:1px 6px}
+.pop.tagp{font-size:22px;-webkit-text-stroke:2px #000;white-space:nowrap}
+.pop.tagp.atk{color:#ffcf3a;-webkit-text-stroke-color:#7a2a00}
+.pop.tagp.guard{color:#9fd0ff;-webkit-text-stroke-color:#0d2f6b}
+.shield{position:absolute;top:22%;width:42%;height:58%;border-radius:50% 50% 46% 46%;border:5px solid #9fd0ff;background:radial-gradient(#9fd0ff55,#9fd0ff11 70%);box-shadow:0 0 18px #7fc3ff;z-index:5;pointer-events:none}
 .pop{position:absolute;font-family:var(--head);font-size:34px;color:#fff;-webkit-text-stroke:3px #b3160e;paint-order:stroke;z-index:6;pointer-events:none;text-shadow:0 3px 0 #000}
 .callout{position:absolute;left:50%;top:22%;transform:translateX(-50%) skewX(-8deg);font-family:var(--head);font-size:44px;white-space:nowrap;color:var(--amber);
   -webkit-text-stroke:4px var(--ink);paint-order:stroke;text-shadow:0 5px 0 #000;z-index:7;pointer-events:none}
@@ -237,9 +244,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .tools{display:flex;gap:8px;flex-wrap:wrap}
 .tools .tg{flex:1;padding:8px;border-radius:10px;border:3px solid var(--line);background:#2b2e36;font-size:15px}
 .tools .tg.on{background:var(--amber);color:#1b1100}
-.slider{display:flex;align-items:center;gap:10px;font-size:13px}
-.slider input{flex:1;accent-color:var(--amber)}
-.slider{white-space:nowrap}
+.adj{display:flex;flex-direction:column;gap:2px;font-size:13px}.adj input{width:100%;accent-color:var(--amber)}.adj .adjh{font-weight:700}.adj .ends{display:flex;justify-content:space-between;font-size:12px;color:#d8d3c6}
 .fld{display:flex;flex-direction:column;gap:6px}
 .fld b{font-size:15px;display:flex;align-items:baseline;gap:8px}
 .fld b small{font-size:12px;color:#b9b6ae;font-weight:500}
@@ -474,6 +479,16 @@ function handMini(h,cls=''){return h==='X'?`<span class="mini X ${cls}"><img src
 
 /* ========= storage ========= */
 const LS_KEY='saikyo_royale_chars_v1';
+const REC_KEY='saikyo_royale_records_v1';
+function loadRecs(){try{const v=JSON.parse(localStorage.getItem(REC_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(e){return {}}}
+function saveRecs(r){try{localStorage.setItem(REC_KEY,JSON.stringify(r))}catch(e){}}
+function recOf(id){const r=loadRecs()[id]||{};return {w:r.w|0,l:r.l|0,d:r.d|0,titles:Array.isArray(r.titles)?r.titles:[]}}
+function recordMatch(M,w,titles){const R=loadRecs();
+  for(const s of [0,1]){const id=M.F[s].ch.id;if(!id)continue;if(s===1&&M.F[1].ch.id===M.F[0].ch.id&&w<0)continue;const r=R[id]||{w:0,l:0,d:0,titles:[]};
+    if(w<0)r.d=(r.d|0)+1;else if(w===s){r.w=(r.w|0)+1;for(const t of titles)if(!r.titles.includes(t))r.titles.push(t)}else r.l=(r.l|0)+1;R[id]=r}
+  saveRecs(R)}
+function recHTML(id){const r=recOf(id);if(!r.w&&!r.l&&!r.d)return '<div class="rec muted">まだ戦っていない</div>';
+  return `<div class="rec"><b>${r.w}勝</b> ${r.l}敗${r.d?` ${r.d}分`:''}</div>${r.titles.length?`<div class="rect">${r.titles.slice(-3).map(t=>`<span>${esc(t)}</span>`).join('')}${r.titles.length>3?`<span>ほか${r.titles.length-3}</span>`:''}</div>`:''}`}
 const S={chars:[],mode:'2p',cpuLevel:'normal',pick:[null,null],match:null};
 function loadUserChars(){try{const v=JSON.parse(localStorage.getItem(LS_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
 function saveUserChars(){try{localStorage.setItem(LS_KEY,JSON.stringify(S.chars.filter(c=>!c.builtin)));return true}catch(e){return false}}
@@ -717,12 +732,12 @@ function tutEnd(){
   $('[data-create]',d).onclick=()=>showCreate();$('[data-battle]',d).onclick=()=>showMode();$('[data-home]',d).onclick=()=>showHome();
 }
 function showZukan(){
-  const d=screen(hdr('キャラ一覧')+`<div class="grid">${S.chars.map(c=>`<div class="ccard"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${esc(statsOf(c).n)}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${c.builtin?'':`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
+  const d=screen(hdr('キャラ一覧')+`<div class="grid">${S.chars.map(c=>`<div class="ccard"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${esc(statsOf(c).n)}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${recHTML(c.id)}${c.builtin?'':`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
     <button class="ccard newcard" data-new><b>＋</b>キャラをつくる</button></div>`,'dim');
   bindBack(d,showHome);
   $('[data-new]',d).onclick=()=>showCreate();
   $$('[data-del]',d).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.id===b.dataset.del);
-    confirmModal(`「${c.name}」を削除する？`,'削除',()=>{S.chars=S.chars.filter(x=>x!==c);saveUserChars();showZukan()})});
+    confirmModal(`「${c.name}」を削除する？`,'削除',()=>{S.chars=S.chars.filter(x=>x!==c);saveUserChars();{const R=loadRecs();delete R[c.id];saveRecs(R)}showZukan()})});
 }
 function confirmModal(msg,ok,fn){const m=document.createElement('div');m.className='modal';
   m.innerHTML=`<div class="panel"><div style="font-size:18px">${esc(msg)}</div><div class="row"><button class="btn gray small" data-n>続ける</button><button class="btn red small" data-y>${ok}</button></div></div>`;
@@ -880,7 +895,9 @@ async function callout(stage,text,cls='',ms=650){const c=document.createElement(
   await anim(c,[{transform:'translateX(-50%) skewX(-8deg) scale(.3)',opacity:0},{transform:'translateX(-50%) skewX(-8deg) scale(1.1)',opacity:1,offset:.25},{transform:'translateX(-50%) skewX(-8deg) scale(1)',opacity:1,offset:.8},{opacity:0}],{duration:ms});c.remove()}
 function impactAt(stage,x,y,scale=1){const im=document.createElement('img');im.src=AS.impact;im.className='impact';im.style.left=x+'%';im.style.top=y+'%';stage.appendChild(im);
   anim(im,[{transform:`scale(${.2*scale}) rotate(0)`,opacity:1},{transform:`scale(${1.1*scale}) rotate(25deg)`,opacity:1,offset:.5},{transform:`scale(${1.3*scale}) rotate(35deg)`,opacity:0}],{duration:380}).then(()=>im.remove())}
-function popAt(stage,s,text,cls=''){const p=document.createElement('div');p.className='pop '+cls;p.textContent=text;p.style.left=(s===0?18:62)+'%';p.style.top='30%';stage.appendChild(p);
+function shieldAt(stage,s){const g=document.createElement('div');g.className='shield';g.style.left=(s===0?6:52)+'%';stage.appendChild(g);
+  anim(g,[{transform:'scale(.6)',opacity:0},{transform:'scale(1.05)',opacity:.9,offset:.25},{transform:'scale(1)',opacity:0}],{duration:700}).then(()=>g.remove())}
+function popAt(stage,s,text,cls='',top=30){const p=document.createElement('div');p.className='pop '+cls;p.textContent=text;p.style.left=(s===0?18:62)+'%';p.style.top=top+'%';stage.appendChild(p);
   anim(p,[{transform:'translateY(10px) scale(.5)',opacity:0},{transform:'translateY(-10px) scale(1.15)',opacity:1,offset:.25},{transform:'translateY(-40px) scale(1)',opacity:0}],{duration:900}).then(()=>p.remove())}
 function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}
 function ghosts(stage,s,dir){const f=$(`[data-f="${s}"]`,stage);const src=fighterEl(stage,s).src;
@@ -916,7 +933,9 @@ async function playEvent(stage,d,M,e){
   ghosts(stage,w,dir);
   anim(fw,[{transform:'none'},{transform:`translateX(${dir*95}%) scale(1.06)`,offset:.45},{transform:'none'}],{duration:520,easing:'ease-out'});
   await sleep(230);
-  impactAt(stage,l===0?24:76,50,e.dmg>=40?1.2:.95);shake(stage);popAt(stage,l,'-'+e.dmg);
+  const atkUp=e.atkUsed&&atkMod(M.F[w].t.a)[0]>0,guard=e.defUsed&&defMod(M.F[l].t.d)[0]<0;
+  impactAt(stage,l===0?24:76,50,atkUp?1.7:e.dmg>=40?1.2:.95);shake(stage);if(atkUp){shake(d);popAt(stage,w,'剛撃！','tagp atk',14)}
+  popAt(stage,l,'-'+e.dmg,guard?'small':'');if(guard){popAt(stage,l,'鉄壁！','tagp guard',14);shieldAt(stage,l)}
   anim(fl,[{transform:'none'},{transform:`translateX(${dir*36}px) rotate(${dir*16}deg)`,offset:.35},{transform:'none'}],{duration:440,easing:'ease-out'});
   if(e.combo>=2)callout(stage,`${e.combo} COMBO!`,'',560);
   await sleep(340);
@@ -1015,7 +1034,8 @@ function narration(M,w){const [A,B]=M.F;
   if(ko&&M.turn<=2)pools.push([`わずか${M.turn}ターン。${Wn}が圧倒的な力で決着をつけた。`,`戦いは長くは続かなかった。${Wn}、速攻の勝利。`]);
   if((st.strongHits||0)>=2&&W.hands[top]>0)pools.push([`${Wn}は得意の${HAND_NAME[top]}で、幾度も${Ln}を打ち砕いた。`,`読まれてなお、${Wn}の${HAND_NAME[top]}は止まらなかった。`]);
   if(st.maxCombo>=3)pools.push([`${Wn}の連撃が、嵐のように${Ln}を飲み込んだ。`,`止まらない連撃。${Ln}に反撃の隙はなかった。`]);
-  if(st.mikiri>=2)pools.push([`${Wn}の見切りが、${Ln}の攻撃をことごとく流した。`,`速さこそ力。${Wn}は${Ln}の一歩先を行っていた。`]);
+  if(st.mikiri>=2)pools.push([`${Wn}は${KANJI_NUM[Math.min(6,st.mikiri)]}度の見切りで、${Ln}の攻撃をことごとく流した。`,`速さこそ力。${st.mikiri}度の見切りが、${Wn}を勝利へ導いた。`]);
+  else if(st.mikiri===1)pools.push([`ただ一度の見切り。その刹那が、${Wn}に流れを呼び込んだ。`]);
   if(!ko&&W.hp-L.hp<=40)pools.push(['紙一重。わずかな差が、勝者と敗者を分けた。',`あと一撃。${Ln}の刃は、ほんのわずかに届かなかった。`]);
   if(!pools.length)pools.push([`${Wn}の勝利。だが、${Ln}の目はまだ死んでいない。`,`勝者は${Wn}。戦場に、新たな伝説が刻まれた。`,`${Wn}、${Ln}を下す。次なる挑戦者を待つ。`]);
   return pick(pools[0].concat(pools.length>1&&Math.random()<.35?pools[1]:[]))}
@@ -1025,7 +1045,7 @@ function showResult(){
   if(w>=0){const st=M.stats[w];const f=M.F[w];
     if(st.specialFinish)titles.push('必殺技フィニッシャー');
     if(st.maxCombo>=3)titles.push(`${KANJI_NUM[Math.min(6,st.maxCombo)]}連撃の達人`);
-    if(st.mikiri>=2)titles.push('見切り王');
+    if(st.mikiri>=4)titles.push('神速の見切り王');else if(st.mikiri>=2)titles.push('見切り王');else if(st.mikiri===1&&titles.length<2)titles.push('見切りの使い手');
     if(f.taken===0)titles.push('パーフェクト王');
     if(st.behind)titles.push('大逆転の勇者');
     {const L=M.F[1-w];const ko=L.hp<=0;
@@ -1034,12 +1054,14 @@ function showResult(){
       if(!ko&&f.hp-L.hp<=40)titles.push('紙一重の覇者');}
     if(!titles.length)titles.push(pick(['サイキョウの証','新たなる覇者','戦場の支配者','不屈の戦士','闘技場の主']));}
   const wf=w>=0?M.F[w]:null;
+  if(!M.recorded){M.recorded=true;recordMatch(M,w,titles.slice(0,2))}
+  const mk=M.stats.map(x=>x.mikiri||0);
   const d=screen(`<div class="ribbon ${w===1?'p2':w<0?'draw':''}">${w<0?'相打ち':sideTag(w,M)+' WIN!'}</div>
     <div class="spot">${w>=0?`<img class="win" src="${wf.ch.img}" alt="">`:`<img class="win" src="${A.ch.img}" alt="" style="max-width:45%"><img class="win" src="${B.ch.img}" alt="" style="max-width:45%">`}${w>=0?`<img class="crowd" src="${AS.crowd}" alt="">`:''}</div>
     ${w>=0?`<div style="text-align:center;font-size:20px">${esc(wf.ch.name)}</div><div class="titles">${titles.slice(0,2).map(t=>`<span>${t}</span>`).join('')}</div>
       <div class="quote">「${esc(winQuote(wf.ch))}」</div>`:''}
     <div class="narr">${esc(narration(M,w))}</div>
-    <div class="muted" style="text-align:center">残存HP　${sideTag(0,M)} ${A.hp} ／ ${sideTag(1,M)} ${B.hp}</div>
+    <div class="muted" style="text-align:center">残存HP　${sideTag(0,M)} ${A.hp} ／ ${sideTag(1,M)} ${B.hp}${mk[0]+mk[1]?`<br>見切り　${sideTag(0,M)} ${mk[0]}回 ／ ${sideTag(1,M)} ${mk[1]}回`:''}</div>
     <button class="btn orange" data-again>⟳ 再戦</button>
     <div class="row"><button class="btn blue small" data-change>👤 キャラを変える</button><button class="btn gray small" data-home>ホーム</button></div>`,'');
   $('[data-again]',d).onclick=()=>startMatch();
@@ -1096,8 +1118,7 @@ function createCut(C){
   const d=screen(hdr('召喚の儀')+stepsHTML(3)+`<div class="muted" style="text-align:center">線が消えたところは「戻す」でなぞると元に戻る</div>
     <canvas class="cutcanvas checker" data-cv></canvas>
     <div class="tools"><button class="tg on" data-tool="erase">🧽 消す</button><button class="tg" data-tool="restore">🖌 戻す</button></div>
-    <div class="slider">うすい線の拾いやすさ<input type="range" min="12" max="90" value="${102-C.sens}" data-sn></div>
-    <div class="slider">まわりの余白<input type="range" min="1" max="12" value="${C.margin}" data-mg></div>
+    <div class="adj"><div class="adjh">切り抜きの調整</div><input type="range" min="12" max="90" value="${102-C.sens}" data-sn><div class="ends"><span>◀ ゴミを消す</span><span>線を残す ▶</span></div></div>
     <div class="spacer"></div>
     <div class="row"><button class="btn gray small" data-back2>範囲を変える</button><button class="btn orange small" data-next>次へ</button></div>`,'dim');
   bindBack(d,()=>createCrop(C));$('[data-back2]',d).onclick=()=>createCrop(C);
@@ -1105,7 +1126,6 @@ function createCut(C){
   const redraw=()=>{ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(composeMasked(C.cropC,C.mask),0,0)};redraw();
   let tool='erase';$$('[data-tool]',d).forEach(b=>b.onclick=()=>{tool=b.dataset.tool;$$('[data-tool]',d).forEach(x=>x.classList.toggle('on',x===b))});
   const remask=()=>{C.mask=makeMask(C);redraw()};
-  $('[data-mg]',d).onchange=e=>{C.margin=+e.target.value;remask()};
   $('[data-sn]',d).onchange=e=>{C.sens=102-(+e.target.value);remask()};
   let down=false,last=null;const BR=24;
   const pt=ev=>{const r=cv.getBoundingClientRect();return {x:(ev.clientX-r.left)*cv.width/r.width,y:(ev.clientY-r.top)*cv.height/r.height,s:cv.width/r.width}};
