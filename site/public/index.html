@@ -855,11 +855,13 @@ function publishChar(c,after){
     const author=$('[data-au]',m).value.trim();lsSet(AUTHOR_KEY,author);
     const ch={name:c.name,special:c.special,desc:c.desc,bio:c.bio,alias:c.alias,style:statsOf(c).n,comment:c.comment,handNote:c.handNote,feats:c.feats||[],stats:statsOf(c),hands:handsOf(c),winLines:c.winLines||[]};
     ch.stats={a:ch.stats.a,d:ch.stats.d,h:ch.stats.h,s:ch.stats.s};
-    try{const r=await arenaReq('/upload',{key:ownerKey(),author,img:c.img,char:ch},30000);const u=uploaded();u[c.id]=r.id;lsSet(UPL_KEY,u);m.remove();
+    try{const img=await shrinkForArena(c.img);const r=await arenaReq('/upload',{key:ownerKey(),author,img,char:ch},30000);const u=uploaded();u[c.id]=r.id;lsSet(UPL_KEY,u);m.remove();
       loadOnline();releaseAnim(c,after)}
     catch(e){const why=e&&e.info&&e.info.reason;b.disabled=false;b.textContent='🌐 解き放つ';
-      toast(why==='flagged'?'AIのチェックで公開できなかった。絵や文字を見直してね':why==='personal'?'電話番号・メール・URLは入れられない':why==='limit'?'公開できるのは1人30体まで':'いまは公開できなかった。あとでもう一度',3000)}};
+      toast(why==='flagged'?'AIのチェックで公開できなかった。絵や文字を見直してね':why==='personal'?'電話番号・メール・URLは入れられない':why==='limit'?'公開できるのは1人30体まで':`いまは公開できなかった（${e&&e.status?e.status+(why?'・'+why:''):'通信エラー'}）`,3500)}};
 }
+async function shrinkForArena(u){if(u.length<=1300000)return u;
+  try{const im=await loadImage(u);for(const mx of [360,300,240]){const k=Math.min(1,mx/Math.max(im.width,im.height));const c=canvasOf(Math.round(im.width*k),Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);const v=exportImg(c);if(v.length<=1300000)return v}}catch(e){}return u}
 function releaseAnim(c,after){
   const d=screen(`<div class="spacer"></div><div class="release"><div class="ring"></div><img src="${c.img}" alt=""></div>
     <div class="relt">解き放たれた！</div><div class="muted" style="text-align:center;line-height:1.7">「${esc(c.name)}」が、みんなの闘技場に旅立った。<br>どこかで誰かと戦うたびに、戦績がキャラ一覧に届く。</div>

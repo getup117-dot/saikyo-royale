@@ -13,7 +13,7 @@
   POST /arena/delete      自分が公開したキャラを取り下げる
 */
 
-const MAX_IMG = 400_000; // data URL の長さ（約300KB）
+const MAX_IMG = 1_400_000; // data URL の長さ（約1MB。iPhoneはPNGになるので大きめに）
 const MAX_PER_OWNER = 30;
 const REPORT_LIMIT = 3;
 
@@ -94,8 +94,13 @@ async function moderate(env, text, img) {
   }
   if (!r.ok) return { ok: false, reason: 'moderation_error' };
   const j = await r.json();
-  const res = (j.results || [])[0] || {};
-  return res.flagged ? { ok: false, reason: 'flagged' } : { ok: true };
+  // バトルゲームなので「暴力」は判定に使わない。本当にまずいものだけを、高めのしきい値で弾く
+  const STRICT = { 'sexual/minors': 0.3, sexual: 0.8, hate: 0.8, 'hate/threatening': 0.8, 'harassment/threatening': 0.9, 'self-harm': 0.8, 'self-harm/intent': 0.7, 'self-harm/instructions': 0.7, 'violence/graphic': 0.95 };
+  for (const res of j.results || []) {
+    const sc = res.category_scores || {};
+    for (const [k, th] of Object.entries(STRICT)) if ((sc[k] || 0) >= th) return { ok: false, reason: 'flagged', cat: k };
+  }
+  return { ok: true };
 }
 
 export async function handleArena(request, env, reply, path) {
@@ -141,7 +146,7 @@ export async function handleArena(request, env, reply, path) {
     const cnt = await D.prepare('SELECT COUNT(*) AS n FROM chars WHERE owner = ? AND hidden = 0').bind(owner).first();
     if ((cnt && cnt.n) >= MAX_PER_OWNER) return reply({ error: 'limit', reason: 'limit' }, 429);
     const mod = await moderate(env, text, img);
-    if (!mod.ok) return reply({ error: 'rejected', reason: mod.reason }, mod.reason === 'flagged' ? 422 : 502);
+    if (!mod.ok) return reply({ error: 'rejected', reason: mod.reason, cat: mod.cat }, mod.reason === 'flagged' ? 422 : 502);
     const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
     await D.prepare('INSERT INTO chars (id, owner, author, data, img, created) VALUES (?, ?, ?, ?, ?, ?)')
       .bind(id, owner, author, JSON.stringify(ch), img, Date.now()).run();
