@@ -254,6 +254,17 @@ button{font:inherit;color:inherit;cursor:pointer}
 .fld input{width:100%;border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink);border-radius:12px;background:#f6f3ec;color:#111;font:inherit;font-size:18px;padding:12px 14px;outline:none;-webkit-appearance:none;appearance:none}
 .fld input:focus{border-color:var(--amber)}
 .fld input::placeholder{color:#9a968c;font-weight:500}
+.infoimg{max-height:88px}.optopen .infoimg{max-height:52px}
+.optbox{border:2px dashed #ffffff55;border-radius:14px;background:#0003}
+.opttg{width:100%;background:none;border:0;color:#d8d3c6;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font:inherit;font-size:15px;font-weight:700}
+.opttg small{font-size:12px;color:#a9a59b;font-weight:500;border:1px solid #ffffff44;border-radius:999px;padding:2px 9px}
+.optbox .optbody{display:none;flex-direction:column;gap:10px;padding:0 12px 12px}
+.optbox.open .opttg{display:none}
+.optbox.open .optbody{display:flex;padding-top:12px}
+.optbox.open::before{content:'書かなくてもOK';display:block;font-size:12px;color:#a9a59b;padding:8px 12px 0}
+.optbox.open .optbody{padding-top:6px}
+.fld.opt b{font-size:13px;color:#d8d3c6}
+.fld.opt input,.fld.opt textarea{font-size:15px;padding:9px 12px;background:#e9e5dc;box-shadow:none;border-width:2px}
 .feat{display:flex;flex-wrap:wrap;gap:8px}
 .feat button{padding:8px 12px;border-radius:999px;border:3px solid var(--line);background:#2b2e36;font-size:14px}
 .feat button.on{background:var(--amber);color:#1b1100}
@@ -1138,13 +1149,18 @@ function createCut(C){
     C.final=exportImg(st);createInfo(C)};
 }
 function createInfo(C){
-  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div style="display:flex;justify-content:center"><img src="${C.final}" alt="" style="max-height:88px;max-width:45%;filter:drop-shadow(0 6px 4px #0009)"></div>
-    <label class="fld"><b>名前</b><input data-name maxlength="12" placeholder="漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
-    <label class="fld"><b>設定<small>任意・鑑定の手がかりになる</small></b><textarea data-bio maxlength="60" rows="2" placeholder="火山の深淵に棲む竜。その翼は夜を裂く。">${esc(C.bio)}</textarea></label>
-    <label class="fld"><b>必殺技の名前</b><input data-sp maxlength="16" placeholder="獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
-    <label class="fld"><b>必殺技の説明<small>任意</small></b><input data-desc maxlength="30" placeholder="全てを灰に還す、終焉の炎。" value="${esc(C.desc)}" autocomplete="off"></label>
+  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div style="display:flex;justify-content:center"><img class="infoimg" src="${C.final}" alt="" style="max-width:45%;filter:drop-shadow(0 6px 4px #0009)"></div>
+    <label class="fld"><b>名前</b><input data-name maxlength="12" placeholder="例：漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
+    <label class="fld"><b>必殺技の名前</b><input data-sp maxlength="16" placeholder="例：獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
+    <div class="optbox ${C.bio||C.desc?'open':''}" data-opt>
+      <button type="button" class="opttg" data-opttg><span>＋ もっとくわしく書く</span><small>書かなくてもOK</small></button>
+      <div class="optbody">
+        <label class="fld opt"><b>設定<small>鑑定のヒントになる</small></b><textarea data-bio maxlength="60" rows="2" placeholder="例：火山の深淵に棲む竜。その翼は夜を裂く。">${esc(C.bio)}</textarea></label>
+        <label class="fld opt"><b>必殺技の説明</b><input data-desc maxlength="30" placeholder="例：全てを灰に還す、終焉の炎。" value="${esc(C.desc)}" autocomplete="off"></label>
+      </div></div>
     <div class="spacer"></div><button class="btn orange" data-next>鑑定の儀へ ▶</button>`,'dim');
   bindBack(d,()=>createCut(C));
+  {const ob=$('[data-opt]',d);if(ob.classList.contains('open'))d.classList.add('optopen');$('[data-opttg]',d).onclick=()=>{ob.classList.add('open');d.classList.add('optopen');setTimeout(()=>$('[data-bio]',d).focus(),50)}}
   const nm=$('[data-name]',d),bio=$('[data-bio]',d),sp=$('[data-sp]',d),ds=$('[data-desc]',d);
   const sync=()=>{C.name=nm.value.trim();C.bio=bio.value.trim();C.special=sp.value.trim();C.desc=ds.value.trim();C.fx=detectFx(C.special)};
   $('[data-next]',d).onclick=()=>{sync();if(!C.name){toast('名前を入力してください');nm.focus();return}if(!C.special){toast('必殺技の名前を入力してください');sp.focus();return}createKantei(C)};
