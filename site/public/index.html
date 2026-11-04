@@ -617,8 +617,8 @@ function showHome(){
     <img class="title-logo" src="${AS.title}" alt="ぼくのかんがえたサイキョウ・ロワイヤル">
     <div class="subcopy">描け。そして、証明しろ。</div>
     <div class="vs-stage"><img class="ch" src="${a.img}" alt=""><div class="vs-text">VS</div><img class="ch" src="${b.img}" alt=""></div>
-    <button class="btn orange" data-create>✎ 戦士を召喚する</button>
-    <button class="btn blue" data-battle>⚔ 決闘へ</button>
+    <button class="btn orange" data-create>✎ キャラをつくる</button>
+    <button class="btn blue" data-battle>⚔ バトルする</button>
     <div class="home-links"><button data-zukan>戦士名鑑</button><button data-howto>決闘の掟</button></div>`);
   $('[data-create]',d).onclick=()=>showCreate();
   $('[data-battle]',d).onclick=()=>showMode();
@@ -627,9 +627,9 @@ function showHome(){
 }
 function showHowto(){
   const d=screen(hdr('決闘の掟')+`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
-    <p style="margin-top:0"><b>Ⅰ　召喚</b><br>紙に描いた戦士を撮影し、名と奥義を刻め。その姿に宿る力は、AIが鑑定する。</p>
+    <p style="margin-top:0"><b>Ⅰ　召喚</b><br>紙に描いた戦士を撮影し、名と必殺技を刻め。その姿に宿る力は、AIが鑑定する。</p>
     <p><b>Ⅱ　六手を刻む</b><br>グー・チョキ・パーを六度選べ。猶予は約8秒。敵に手の内は見えない。</p>
-    <p><b>Ⅲ　奥義</b><br>第二ターンより解放。六手のどこにでも「必殺」を仕込める。一戦に一度きり。あらゆる手を打ち破り80ダメージ。奥義同士は相殺する。</p>
+    <p><b>Ⅲ　必殺技</b><br>第二ターンより解放。六手のどこにでも「必殺」を仕込める。一戦に一度きり。あらゆる手を打ち破り80ダメージ。必殺技同士は相殺する。</p>
     <p><b>Ⅳ　見切り</b><br>速さで勝る者は、拮抗の刹那に「見切り」を放ち10ダメージを与える。速さの差10ごとに、1ターンの発動回数が1増える（最大3回）。</p>
     <p style="margin-bottom:0"><b>Ⅴ　決着</b><br>敵のHPを0にするか、三ターン終了時に多くのHPを残した者が勝者となる。</p></div>`,'dim');
   bindBack(d,showHome);
@@ -733,7 +733,7 @@ function showInput(side,done){
     `<div class="inhead"><h3>${sideTag(side,M)}、六手を刻め</h3><div class="timer" data-timer><span data-t>${Math.ceil(limit)}</span></div></div>
     <div class="slots" data-slots>${[0,1,2,3,4,5].map(i=>`<div class="slot" data-slot="${i}">${i+1}</div>`).join('')}</div>
     <div class="spacer"></div>
-    <div class="note">${canSpecial?'「必殺」を押した位置に奥義が宿る（一戦に一度）':M.turn===1?'奥義は第二ターンより解放される':'奥義はすでに放たれた'}</div>
+    <div class="note">${canSpecial?'「必殺」を押すと、その順番に必殺技が入る（1試合1回）':M.turn===1?'必殺技は第二ターンより解放される':'必殺技はすでに放たれた'}</div>
     <div class="pick">${['R','S','P'].map(h=>`<button class="pk ${h}" data-h="${h}"><img src="${HAND_IMG[h]}" alt="">${HAND_NAME[h]}</button>`).join('')}
       ${me.specialUsed&&M.turn>=2?'':`<button class="pk X" data-h="X" ${canSpecial?'':'disabled'}>${SPECIAL_SVG}必殺</button>`}</div>
     <div class="row"><button class="btn gray small" data-undo>↶ 戻す</button><button class="btn orange small" data-done disabled>確定</button></div>`,'dim');
@@ -810,7 +810,7 @@ async function playEvent(stage,d,M,e){
       im.style.cssText+=`width:60%;left:${l===0?-6:46}%;top:20%;z-index:6`;stage.appendChild(im);
       anim(im,[{transform:'scale(.3)',opacity:1},{transform:'scale(1.15) rotate(15deg)',opacity:0}],{duration:650}).then(()=>im.remove())}shake(d);popAt(stage,l,'-80');
     anim(fl,[{transform:'none'},{transform:`translateX(${l===0?-40:40}px) rotate(${l===0?-24:24}deg)`,offset:.4},{transform:'none'}],{duration:600});
-    await callout(stage,e.combo>=2?`${e.combo} COMBO!`:'奥義炸裂','',600);return}
+    await callout(stage,e.combo>=2?`${e.combo} COMBO!`:'必殺技炸裂','',600);return}
   if(e.kind==='clash'){await playClash(M);impactAt(stage,50,50,1.6);shake(d);await callout(stage,'相殺！','white',700);return}
   const fa=fighterEl(stage,0),fb=fighterEl(stage,1);
   if(e.kind==='tie'){
@@ -919,7 +919,7 @@ window.playClash=playClash;async function playClash(M){
 /* ========= result ========= */
 
 function loserLine(M,w){const l=1-w;const L=M.F[l],W=M.F[w],st=M.stats[l];const tag=sideTag(l,M);
-  const good=st.specialHit?'奥義は届いた。':st.maxCombo>=3?`${KANJI_NUM[Math.min(6,st.maxCombo)]}連撃を刻んだ。`:st.mikiri>=1?`見切りを${st.mikiri}度決めた。`:'';
+  const good=st.specialHit?'必殺技は届いた。':st.maxCombo>=3?`${KANJI_NUM[Math.min(6,st.maxCombo)]}連撃を刻んだ。`:st.mikiri>=1?`見切りを${st.mikiri}度決めた。`:'';
   const close=W.hp<=60?`あと${W.hp}。届かなかった一撃を忘れるな。`:L.hp>0?`差は${W.hp-L.hp}。次こそ運命を覆せ。`:'敗北は、終わりではない。';
   return `${tag}：${good?good+' ':''}${close}`}
 function showResult(){
@@ -952,16 +952,16 @@ function showCreate(onDone){
   createPhoto(C);
 }
 function createPhoto(C){
-  const d=screen(hdr('召喚の儀')+stepsHTML(1)+`<div class="panel" style="text-align:center;font-size:15px">紙に描いた戦士を<br>撮影するか、画像から呼び出せ</div>
+  const d=screen(hdr('召喚の儀')+stepsHTML(1)+`<div class="panel" style="text-align:center;font-size:15px">紙に描いたキャラを<br>撮影するか、アルバムから選ぶ</div>
     <div class="photo-btns"><label><b>📷</b>撮影する<input type="file" accept="image/*" capture="environment" data-file></label>
     <label><b>🖼</b>画像を選ぶ<input type="file" accept="image/*" data-file></label></div>
-    <div class="muted" style="text-align:center">白い紙に濃い線で描くほど、輪郭は鋭く切り出される</div>`,'dim');
+    <div class="muted" style="text-align:center">白い紙に濃い線で描くと、きれいに切り抜ける</div>`,'dim');
   bindBack(d,C.onDone);
   $$('[data-file]',d).forEach(inp=>inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
     const url=URL.createObjectURL(f);try{const im=await loadImage(url);C.src=fitCanvas(im,1400);C.crop=null;createCrop(C)}catch(e){toast('画像を読み込めなかった')}finally{URL.revokeObjectURL(url)}});
 }
 function createCrop(C){
-  const d=screen(hdr('召喚の儀')+stepsHTML(2)+`<div class="muted" style="text-align:center">四隅を動かし、戦士だけを囲め</div>
+  const d=screen(hdr('召喚の儀')+stepsHTML(2)+`<div class="muted" style="text-align:center">四すみの●をドラッグして、キャラだけを囲む</div>
     <div class="cropwrap" data-wrap><img data-img alt=""><div class="cropclip"><div class="cropdim" data-dim></div></div><div class="croprect" data-rect><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div></div>
     <div class="spacer"></div><div class="row"><button class="btn gray small" data-redo>撮り直す</button><button class="btn orange small" data-next>切り抜く ✂</button></div>`,'dim');
   bindBack(d,()=>createPhoto(C));$('[data-redo]',d).onclick=()=>createPhoto(C);
@@ -991,11 +991,11 @@ function createCrop(C){
     C.cropRaw=cc;C.cropC=C.flat?flattenPaper(cc):cc;C.mask=makeMask(C);createCut(C)};
 }
 function createCut(C){
-  const d=screen(hdr('召喚の儀')+stepsHTML(3)+`<div class="muted" style="text-align:center">消えた線は「戻す」でなぞれ</div>
+  const d=screen(hdr('召喚の儀')+stepsHTML(3)+`<div class="muted" style="text-align:center">線が消えたところは「戻す」でなぞると元に戻る</div>
     <canvas class="cutcanvas checker" data-cv></canvas>
     <div class="tools"><button class="tg on" data-tool="erase">🧽 消す</button><button class="tg" data-tool="restore">🖌 戻す</button></div>
-    <div class="slider">余白<input type="range" min="1" max="12" value="${C.margin}" data-mg></div>
-    <div class="slider">細い線の感度<input type="range" min="12" max="90" value="${102-C.sens}" data-sn></div>
+    <div class="slider">まわりの余白<input type="range" min="1" max="12" value="${C.margin}" data-mg></div>
+    <div class="slider">うすい線の拾いやすさ<input type="range" min="12" max="90" value="${102-C.sens}" data-sn></div>
     <div class="spacer"></div>
     <div class="row"><button class="btn gray small" data-back2>範囲を変える</button><button class="btn orange small" data-next>次へ</button></div>`,'dim');
   bindBack(d,()=>createCrop(C));$('[data-back2]',d).onclick=()=>createCrop(C);
@@ -1012,21 +1012,21 @@ function createCut(C){
   cv.addEventListener('pointerdown',ev=>{down=true;last=null;cv.setPointerCapture(ev.pointerId);paint(pt(ev))});
   cv.addEventListener('pointermove',ev=>{if(down)paint(pt(ev))});
   const up=()=>{down=false;last=null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-  $('[data-next]',d).onclick=()=>{const st=stickerize(composeMasked(C.cropC,C.mask));if(!st){toast('戦士の姿が消えた。「戻す」でなぞれ');return}
+  $('[data-next]',d).onclick=()=>{const st=stickerize(composeMasked(C.cropC,C.mask));if(!st){toast('キャラが全部消えてしまった。「戻す」でなぞれば元に戻る');return}
     C.final=exportImg(st);createInfo(C)};
 }
 function createInfo(C){
   const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div style="display:flex;justify-content:center"><img src="${C.final}" alt="" style="max-height:130px;max-width:55%;filter:drop-shadow(0 6px 4px #0009)"></div>
     <label class="fld"><b>名</b><input data-name maxlength="12" placeholder="漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
     <label class="fld"><b>設定<small>任意</small></b><textarea data-bio maxlength="60" rows="2" placeholder="火山の深淵に棲む竜。その翼は夜を裂く。">${esc(C.bio)}</textarea></label>
-    <label class="fld"><b>奥義の名</b><input data-sp maxlength="16" placeholder="獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
-    <label class="fld"><b>奥義の説明<small>任意</small></b><input data-desc maxlength="30" placeholder="全てを灰に還す、終焉の炎。" value="${esc(C.desc)}" autocomplete="off"></label>
+    <label class="fld"><b>必殺技の名</b><input data-sp maxlength="16" placeholder="獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
+    <label class="fld"><b>必殺技の説明<small>任意</small></b><input data-desc maxlength="30" placeholder="全てを灰に還す、終焉の炎。" value="${esc(C.desc)}" autocomplete="off"></label>
     <div class="muted" style="text-align:center">設定は、鑑定の手がかりとなる</div>
     <div class="spacer"></div><button class="btn orange" data-next>鑑定の儀へ ▶</button>`,'dim');
   bindBack(d,()=>createCut(C));
   const nm=$('[data-name]',d),bio=$('[data-bio]',d),sp=$('[data-sp]',d),ds=$('[data-desc]',d);
   const sync=()=>{C.name=nm.value.trim();C.bio=bio.value.trim();C.special=sp.value.trim();C.desc=ds.value.trim();C.fx=detectFx(C.special)};
-  $('[data-next]',d).onclick=()=>{sync();if(!C.name){toast('名を刻め');nm.focus();return}if(!C.special){toast('奥義の名を刻め');sp.focus();return}createKantei(C)};
+  $('[data-next]',d).onclick=()=>{sync();if(!C.name){toast('名を刻め');nm.focus();return}if(!C.special){toast('必殺技の名を刻め');sp.focus();return}createKantei(C)};
 }
 let SAMPLE=null;
 async function initSample(){try{if(window.claude&&typeof window.claude.use==='function'){SAMPLE=await window.claude.use('sample')}}catch(e){SAMPLE=null}}
@@ -1081,7 +1081,7 @@ function createKantei(C){
     const go=$('[data-go]',d);go.disabled=true;go.classList.add('busy');go.textContent='🔍 鑑定中…';sc.classList.add('scan');$('[data-msg]',d).innerHTML='解析中……';
     try{const r=await autoKantei(C);C.feats=r.feats;C.alias=r.alias;C.comment=r.comment;C.ai=true;kanteiAnim(C)}
     catch(e){if(!document.body.contains(go))return;
-      const msg=e&&e.code==='rate_limited'?'鑑定の儀は混み合っている。宿る力を自ら選べ':'自動鑑定は使えない。宿る力を自ら選べ';
+      const msg=e&&e.code==='rate_limited'?'鑑定が混み合っている。描いたものを下から選べ':'自動鑑定が使えない。描いたものを下から選べ';
       createKanteiManual(C,msg)}};
 }
 function createKanteiManual(C,note=''){
