@@ -750,7 +750,7 @@ function showInput(side,done){
   const limit=inputTime(me.t.s,op.t.s);const canSpecial=M.turn>=2&&!me.specialUsed;
   const prev=M.history.length?M.history[M.history.length-1]:null;
   const handRow=(f,label,cls)=>`<div class="hrow ${cls}"><span class="hl">${label}</span>${['R','S','P'].map(h=>{const v=f.hands[h];return `<span class="hc">${handMini(h)}<b class="${v>0?'up':v<0?'dn':'zero'}">${v>0?'+'+v:v<0?'−'+Math.abs(v):'±0'}</b></span>`}).join('')}</div>`;
-  const d=screen(QUIT_BAR+hpBarHTML(M)+`<div class="panel hpanel">${handRow(op,`${sideTag(1-side,M)}の相性`,'opp')}${handRow(me,'自分の相性','me')}<div class="muted" style="font-size:10px;margin-top:-1px">数字は、その手で勝ったときのダメージの増減</div></div>`+
+  const d=screen(QUIT_BAR+hpBarHTML(M)+`<div class="panel hpanel">${handRow(op,`${sideTag(1-side,M)}の相性`,'opp')}<div class="muted" style="font-size:10px;margin-top:-1px">数字は、その手で勝ったときのダメージの増減</div></div>`+
     (prev?`<div class="panel prev"><div class="pr"><span>前の${sideTag(side,M)}</span>${prev[side].map(h=>handMini(h)).join('')}</div><div class="pr"><span>前の${sideTag(1-side,M)}</span>${prev[1-side].map(h=>handMini(h)).join('')}</div></div>`:'')+
     `<div class="inhead"><h3>${sideTag(side,M)}の手を6つ選ぶ</h3><div class="timer" data-timer><span data-t>${Math.ceil(limit)}</span></div></div>
     <div class="slots" data-slots>${[0,1,2,3,4,5].map(i=>`<div class="slot" data-slot="${i}">${i+1}</div>`).join('')}</div>
@@ -1016,8 +1016,8 @@ function createCut(C){
   const d=screen(hdr('召喚の儀')+stepsHTML(3)+`<div class="muted" style="text-align:center">線が消えたところは「戻す」でなぞると元に戻る</div>
     <canvas class="cutcanvas checker" data-cv></canvas>
     <div class="tools"><button class="tg on" data-tool="erase">🧽 消す</button><button class="tg" data-tool="restore">🖌 戻す</button></div>
-    <div class="slider">まわりの余白<input type="range" min="1" max="12" value="${C.margin}" data-mg></div>
     <div class="slider">うすい線の拾いやすさ<input type="range" min="12" max="90" value="${102-C.sens}" data-sn></div>
+    <div class="slider">まわりの余白<input type="range" min="1" max="12" value="${C.margin}" data-mg></div>
     <div class="spacer"></div>
     <div class="row"><button class="btn gray small" data-back2>範囲を変える</button><button class="btn orange small" data-next>次へ</button></div>`,'dim');
   bindBack(d,()=>createCrop(C));$('[data-back2]',d).onclick=()=>createCrop(C);
