@@ -661,9 +661,9 @@ const RULES_HTML=`<div class="panel" style="font-weight:500;font-size:14px;line-
     <p style="margin-bottom:0"><b>6　勝ち負け</b><br>相手のHPを0にしたら勝ち。3ターン終わったら、HPが多く残っているほうの勝ち。</p></div>`;
 /* ========= tutorial ========= */
 const TUT_CPU={1:['R','S','P','R','P','S'],2:['P','R','X','S','R','P']};
-function startTutorial(){
+function startTutorial(back=showHome){
   const c0=S.chars.find(c=>c.id==='s1')||S.chars[0],c1=S.chars.find(c=>c.id==='s2')||S.chars[1]||S.chars[0];
-  S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:true,cpuLevel:'weak',tut:true,
+  S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:true,cpuLevel:'weak',tut:true,tutBack:back,
     stats:[{mikiri:0,maxCombo:0,specialFinish:false,behind:false},{mikiri:0,maxCombo:0,specialFinish:false,behind:false}],hands:[null,null]};
   showPrep();
 }
@@ -736,12 +736,14 @@ function showMode(){
       <div style="font-size:14px">CPUの強さを選んでから、下のボタンを押す</div>
       <div class="cpulv">${['weak','normal','strong'].map(k=>`<button data-lv="${k}" class="${S.cpuLevel===k?'on':''}">${{weak:'弱い',normal:'ふつう',strong:'強い'}[k]}</button>`).join('')}</div>
       <button class="btn orange" data-cpu style="padding:18px">🤖 CPUと対戦</button>
-    </div>`,'dim');
+    </div>
+    <button class="btn gray" data-tut>🔰 あそび方を見る</button>`,'dim');
   bindBack(d,()=>{S.preset=null;showHome()});
   $$('[data-lv]',d).forEach(b=>b.onclick=()=>{S.cpuLevel=b.dataset.lv;$$('[data-lv]',d).forEach(x=>x.classList.toggle('on',x===b))});
   const go=mode=>{S.mode=mode;if(S.preset){S.pick=[S.preset,null];S.preset=null;showSelect(1)}else{S.pick=[null,null];showSelect(0)}};
   $('[data-2p]',d).onclick=()=>go('2p');
   $('[data-cpu]',d).onclick=()=>go('cpu');
+  $('[data-tut]',d).onclick=()=>{S.preset=null;startTutorial(showMode)};
 }
 function showSelect(side){
   const who=side===0?'1P':(S.mode==='cpu'?'CPU':'2P');
@@ -775,7 +777,7 @@ function showPrep(){
     <div class="spacer"></div>
     ${M.cpu?'':'<div class="panel handoff" style="padding:8px;flex-direction:row;justify-content:center;gap:12px"><img class="hoimg" src="'+AS.handoff+'" alt="" style="width:84px"><h3 style="font-size:22px">スマホを1Pに渡す</h3></div>'}
     <button class="btn orange" data-ok>${M.cpu?'バトル開始':'準備OK'}</button>`,'dim');
-  bindBack(d,()=>M.tut?(S.match=null,showHome()):showSelect(1));
+  bindBack(d,()=>M.tut?(S.match=null,M.tutBack()):showSelect(1));
   $('[data-ok]',d).onclick=()=>beginTurn();
   if(M.tut)tutPrep(d);
 }
