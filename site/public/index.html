@@ -636,23 +636,24 @@ function showHowto(){
 }
 function showZukan(){
   const d=screen(hdr('戦士名鑑')+`<div class="grid">${S.chars.map(c=>`<div class="ccard"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${TYPES[c.type].n}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${c.builtin?'':`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
-    <button class="ccard newcard" data-new><b>＋</b>新たな戦士を召喚</button></div>`,'dim');
+    <button class="ccard newcard" data-new><b>＋</b>キャラをつくる</button></div>`,'dim');
   bindBack(d,showHome);
   $('[data-new]',d).onclick=()=>showCreate();
   $$('[data-del]',d).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.id===b.dataset.del);
-    confirmModal(`「${c.name}」を抹消するか？`,'抹消',()=>{S.chars=S.chars.filter(x=>x!==c);saveUserChars();showZukan()})});
+    confirmModal(`「${c.name}」を削除する？`,'削除',()=>{S.chars=S.chars.filter(x=>x!==c);saveUserChars();showZukan()})});
 }
 function confirmModal(msg,ok,fn){const m=document.createElement('div');m.className='modal';
-  m.innerHTML=`<div class="panel"><div style="font-size:18px">${esc(msg)}</div><div class="row"><button class="btn gray small" data-n>思いとどまる</button><button class="btn red small" data-y>${ok}</button></div></div>`;
+  m.innerHTML=`<div class="panel"><div style="font-size:18px">${esc(msg)}</div><div class="row"><button class="btn gray small" data-n>続ける</button><button class="btn red small" data-y>${ok}</button></div></div>`;
   app.appendChild(m);$('[data-n]',m).onclick=()=>m.remove();$('[data-y]',m).onclick=()=>{m.remove();fn()}}
 
 function showMode(){
-  const d=screen(hdr('決闘の形式')+`
-    <button class="btn blue" data-2p style="padding:22px">👥 対人決闘</button>
-    <div class="muted" style="text-align:center;margin-top:-6px">一台の端末を、互いに託して戦う</div>
+  const d=screen(hdr('対戦モードを選ぶ')+`
+    <button class="btn blue" data-2p style="padding:22px">👥 2人で対戦</button>
+    <div class="muted" style="text-align:center;margin-top:-6px">1台のスマホを、交代で使って遊ぶ</div>
     <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn orange" data-cpu style="padding:18px">🤖 機械兵と戦う</button>
-      <div class="cpulv">${['weak','normal','strong'].map(k=>`<button data-lv="${k}" class="${S.cpuLevel===k?'on':''}">${{weak:'下級',normal:'中級',strong:'上級'}[k]}</button>`).join('')}</div>
+      <div style="font-size:14px">CPUの強さを選んでから、下のボタンを押す</div>
+      <div class="cpulv">${['weak','normal','strong'].map(k=>`<button data-lv="${k}" class="${S.cpuLevel===k?'on':''}">${{weak:'弱い',normal:'ふつう',strong:'強い'}[k]}</button>`).join('')}</div>
+      <button class="btn orange" data-cpu style="padding:18px">🤖 CPUと対戦</button>
     </div>`,'dim');
   bindBack(d,showHome);
   $$('[data-lv]',d).forEach(b=>b.onclick=()=>{S.cpuLevel=b.dataset.lv;$$('[data-lv]',d).forEach(x=>x.classList.toggle('on',x===b))});
@@ -661,10 +662,10 @@ function showMode(){
 }
 function showSelect(side){
   const who=side===0?'1P':(S.mode==='cpu'?'CPU':'2P');
-  const d=screen(hdr(`${who}の戦士を選べ`)+`
-    ${side===1&&S.mode==='cpu'?'<button class="btn gray small" data-rand>🎲 運命に委ねる</button>':''}
+  const d=screen(hdr(`${who}のキャラを選ぶ`)+`
+    ${side===1&&S.mode==='cpu'?'<button class="btn gray small" data-rand>🎲 ランダムで選ぶ</button>':''}
     <div class="grid">${S.chars.map(c=>`<button class="ccard ${S.pick[side]===c.id?'sel':''}" data-id="${c.id}"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${TYPES[c.type].n}</div>${starsHTML(c.type)}</button>`).join('')}
-    <button class="ccard newcard" data-new><b>＋</b>新たな戦士を召喚</button></div>`,'dim');
+    <button class="ccard newcard" data-new><b>＋</b>キャラをつくる</button></div>`,'dim');
   bindBack(d,()=>side===0?showMode():showSelect(0));
   $('[data-new]',d).onclick=()=>showCreate(()=>showSelect(side));
   const go=id=>{S.pick[side]=id;if(side===0)showSelect(1);else startMatch()};
@@ -673,8 +674,8 @@ function showSelect(side){
 }
 
 /* ========= match flow ========= */
-const QUIT_BAR='<div class="topbar"><button class="quit" data-quit>✕ 退く</button></div>';
-function bindQuit(d){const q=$('[data-quit]',d);if(q)q.onclick=()=>confirmModal('決闘を放棄して退くか？','退く',()=>{if(S.match)S.match.aborted=true;SPEED=1;showHome()})}
+const QUIT_BAR='<div class="topbar"><button class="quit" data-quit>✕ やめる</button></div>';
+function bindQuit(d){const q=$('[data-quit]',d);if(q)q.onclick=()=>confirmModal('試合をやめてトップに戻る？','やめる',()=>{if(S.match)S.match.aborted=true;SPEED=1;showHome()})}
 const alive=M=>S.match===M&&!M.aborted;
 function startMatch(){
   const c0=S.chars.find(c=>c.id===S.pick[0]),c1=S.chars.find(c=>c.id===S.pick[1]);
@@ -687,10 +688,10 @@ function showPrep(){
   const M=S.match;const [A,B]=M.F;
   const card=(f,s)=>`<div class="pcard"><span class="ptag p${s+1}">${sideTag(s,M)}</span><img src="${f.ch.img}" alt=""><div class="nm">${esc(f.ch.name)}</div>${f.ch.alias?`<div class="sp" style="color:#f2c46b">${esc(f.ch.alias)}</div>`:''}<div class="sp">${esc(f.ch.special)}</div><div class="ty">${f.t.n}・HP${f.maxHp}</div>${starsHTML(f.ch.type)}</div>`;
   const d=screen(hdr('決戦前夜')+`<div class="versus">${card(A,0)}<div class="vsmall">VS</div>${card(B,1)}</div>
-    <div class="muted" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'速さは互角。見切りは発動しない':`${sideTag(A.t.s>B.t.s?0:1,M)}は見切り：1ターン${mikiriCount(A.t.s,B.t.s)}回まで`}</div>
+    <div class="muted" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}は見切り：1ターン${mikiriCount(A.t.s,B.t.s)}回まで`}</div>
     <div class="spacer"></div>
-    ${M.cpu?'':'<div class="panel handoff" style="padding:12px"><img class="hoimg" src="'+AS.handoff+'" alt=""><h3>端末を1Pへ託せ</h3></div>'}
-    <button class="btn orange" data-ok>${M.cpu?'決闘開始':'覚悟はできた'}</button>`,'dim');
+    ${M.cpu?'':'<div class="panel handoff" style="padding:12px"><img class="hoimg" src="'+AS.handoff+'" alt=""><h3>スマホを1Pに渡す</h3></div>'}
+    <button class="btn orange" data-ok>${M.cpu?'バトル開始':'準備OK'}</button>`,'dim');
   bindBack(d,()=>showSelect(1));
   $('[data-ok]',d).onclick=()=>beginTurn();
 }
@@ -704,8 +705,8 @@ function beginTurn(){
 }
 function showHandoff(side,next){
   const M=S.match;
-  const d=screen(QUIT_BAR+`<div class="spacer"></div><div class="panel handoff"><img class="hoimg" src="${AS.handoff}" alt=""><h3>端末を${sideTag(side,M)}へ託せ</h3>
-    <div class="muted">ターン ${M.turn}/3　${sideTag(1-side,M)}は目を伏せよ</div></div><div class="spacer"></div><button class="btn orange" data-ok>覚悟はできた</button>`,'dim');
+  const d=screen(QUIT_BAR+`<div class="spacer"></div><div class="panel handoff"><img class="hoimg" src="${AS.handoff}" alt=""><h3>スマホを${sideTag(side,M)}に渡す</h3>
+    <div class="muted">ターン ${M.turn}/3　${sideTag(1-side,M)}は画面を見ないこと</div></div><div class="spacer"></div><button class="btn orange" data-ok>準備OK</button>`,'dim');
   bindQuit(d);$('[data-ok]',d).onclick=next;
 }
 function hpBarHTML(M){
@@ -730,10 +731,10 @@ function showInput(side,done){
   const prev=M.history.length?M.history[M.history.length-1]:null;
   const d=screen(QUIT_BAR+hpBarHTML(M)+
     (prev?`<div class="panel prev"><div class="pr"><span>前の${sideTag(side,M)}</span>${prev[side].map(h=>handMini(h)).join('')}</div><div class="pr"><span>前の${sideTag(1-side,M)}</span>${prev[1-side].map(h=>handMini(h)).join('')}</div></div>`:'')+
-    `<div class="inhead"><h3>${sideTag(side,M)}、六手を刻め</h3><div class="timer" data-timer><span data-t>${Math.ceil(limit)}</span></div></div>
+    `<div class="inhead"><h3>${sideTag(side,M)}の手を6つ選ぶ</h3><div class="timer" data-timer><span data-t>${Math.ceil(limit)}</span></div></div>
     <div class="slots" data-slots>${[0,1,2,3,4,5].map(i=>`<div class="slot" data-slot="${i}">${i+1}</div>`).join('')}</div>
     <div class="spacer"></div>
-    <div class="note">${canSpecial?'「必殺」を押すと、その順番に必殺技が入る（1試合1回）':M.turn===1?'必殺技は第二ターンより解放される':'必殺技はすでに放たれた'}</div>
+    <div class="note">${canSpecial?'「必殺」を押すと、その順番に必殺技が入る（1試合1回）':M.turn===1?'必殺技は2ターン目から使える':'必殺技はもう使った'}</div>
     <div class="pick">${['R','S','P'].map(h=>`<button class="pk ${h}" data-h="${h}"><img src="${HAND_IMG[h]}" alt="">${HAND_NAME[h]}</button>`).join('')}
       ${me.specialUsed&&M.turn>=2?'':`<button class="pk X" data-h="X" ${canSpecial?'':'disabled'}>${SPECIAL_SVG}必殺</button>`}</div>
     <div class="row"><button class="btn gray small" data-undo>↶ 戻す</button><button class="btn orange small" data-done disabled>確定</button></div>`,'dim');
@@ -752,7 +753,7 @@ function showInput(side,done){
   const t0=performance.now();const tEl=$('[data-t]',d),tw=$('[data-timer]',d);
   const finish=(timeout)=>{if(finished)return;finished=true;clearInterval(iv);if(!alive(M))return;
     const missing=6-hands.length;while(hands.length<6)hands.push(randHand());M.hands[side]=hands.slice();
-    if(timeout){render();toast(missing>0?'刻限切れ。残る手は運命が決めた':'刻限切れ。この六手で挑む',1400);setTimeout(()=>{if(alive(M))done()},900*SPEED)}else done()};
+    if(timeout){render();toast(missing>0?'時間切れ。残りの手はランダムで入った':'時間切れ。この6手で決定',1400);setTimeout(()=>{if(alive(M))done()},900*SPEED)}else done()};
   const iv=setInterval(()=>{const left=limit-(performance.now()-t0)/1000/SPEED;
     if(!document.body.contains(tEl)||!alive(M)){clearInterval(iv);return}
     tEl.textContent=Math.max(0,Math.ceil(left));tw.style.setProperty('--p',Math.max(0,left/limit*100)+'%');tw.classList.toggle('warn',left<3.5);
@@ -770,9 +771,9 @@ async function playTurn(){
     <div class="stage" data-stage><div class="fighter l" data-f="0"><img src="${M.F[0].ch.img}" alt=""></div><div class="fighter r" data-f="1"><img src="${M.F[1].ch.img}" alt=""></div></div>`,'');
   updateHP(d,M,hpBefore);renderMarkers(d,M);bindQuit(d);
   const stage=$('[data-stage]',d);
-  const hint=document.createElement('div');hint.className='ffhint';hint.textContent='タップで加速';stage.appendChild(hint);
+  const hint=document.createElement('div');hint.className='ffhint';hint.textContent='画面タップで早送り';stage.appendChild(hint);
   const baseSpeed=SPEED;
-  d.addEventListener('pointerdown',ev=>{if(ev.target.closest('[data-quit]'))return;SPEED=baseSpeed*.35;hint.textContent='▶▶ 加速中'});
+  d.addEventListener('pointerdown',ev=>{if(ev.target.closest('[data-quit]'))return;SPEED=baseSpeed*.35;hint.textContent='▶▶ 早送り中'});
   await sleep(450);
   for(const e of events){
     if(!alive(M)){SPEED=baseSpeed;return}
@@ -939,7 +940,7 @@ function showResult(){
     ${w>=0?`<div class="loser">${loserLine(M,w)}</div>`:''}
     <div class="muted" style="text-align:center">残存HP　${sideTag(0,M)} ${A.hp} ／ ${sideTag(1,M)} ${B.hp}</div>
     <button class="btn orange" data-again>⟳ 再戦</button>
-    <div class="row"><button class="btn blue small" data-change>👤 戦士を変える</button><button class="btn gray small" data-home>ホーム</button></div>`,'');
+    <div class="row"><button class="btn blue small" data-change>👤 キャラを変える</button><button class="btn gray small" data-home>ホーム</button></div>`,'');
   $('[data-again]',d).onclick=()=>startMatch();
   $('[data-change]',d).onclick=()=>showSelect(0);
   $('[data-home]',d).onclick=()=>showHome();
@@ -1017,16 +1018,16 @@ function createCut(C){
 }
 function createInfo(C){
   const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div style="display:flex;justify-content:center"><img src="${C.final}" alt="" style="max-height:130px;max-width:55%;filter:drop-shadow(0 6px 4px #0009)"></div>
-    <label class="fld"><b>名</b><input data-name maxlength="12" placeholder="漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
+    <label class="fld"><b>名前</b><input data-name maxlength="12" placeholder="漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
     <label class="fld"><b>設定<small>任意</small></b><textarea data-bio maxlength="60" rows="2" placeholder="火山の深淵に棲む竜。その翼は夜を裂く。">${esc(C.bio)}</textarea></label>
-    <label class="fld"><b>必殺技の名</b><input data-sp maxlength="16" placeholder="獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
+    <label class="fld"><b>必殺技の名前</b><input data-sp maxlength="16" placeholder="獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
     <label class="fld"><b>必殺技の説明<small>任意</small></b><input data-desc maxlength="30" placeholder="全てを灰に還す、終焉の炎。" value="${esc(C.desc)}" autocomplete="off"></label>
     <div class="muted" style="text-align:center">設定は、鑑定の手がかりとなる</div>
     <div class="spacer"></div><button class="btn orange" data-next>鑑定の儀へ ▶</button>`,'dim');
   bindBack(d,()=>createCut(C));
   const nm=$('[data-name]',d),bio=$('[data-bio]',d),sp=$('[data-sp]',d),ds=$('[data-desc]',d);
   const sync=()=>{C.name=nm.value.trim();C.bio=bio.value.trim();C.special=sp.value.trim();C.desc=ds.value.trim();C.fx=detectFx(C.special)};
-  $('[data-next]',d).onclick=()=>{sync();if(!C.name){toast('名を刻め');nm.focus();return}if(!C.special){toast('必殺技の名を刻め');sp.focus();return}createKantei(C)};
+  $('[data-next]',d).onclick=()=>{sync();if(!C.name){toast('名前を入力してください');nm.focus();return}if(!C.special){toast('必殺技の名前を入力してください');sp.focus();return}createKantei(C)};
 }
 let SAMPLE=null;
 async function initSample(){try{if(window.claude&&typeof window.claude.use==='function'){SAMPLE=await window.claude.use('sample')}}catch(e){SAMPLE=null}}
@@ -1086,11 +1087,11 @@ function createKantei(C){
 }
 function createKanteiManual(C,note=''){
   const d=screen(hdr('鑑定の儀')+stepsHTML(5)+`<div class="kantei"><img src="${C.final}" alt=""></div>
-    ${note?`<div class="muted" style="text-align:center">${note}</div>`:''}<div class="panel"><div style="font-size:15px">その姿に描かれたものは？（二つまで）</div><div class="feat">${FEATURES.map(g=>`<h4>${{a:'攻撃の証',d:'守護の証',h:'剛体の証',s:'疾風の証'}[g.k]}</h4>`+g.items.map(it=>`<button data-ft="${it}" class="${C.features.includes(it)?'on':''}">${it}</button>`).join('')).join('')}</div>
+    ${note?`<div class="muted" style="text-align:center">${note}</div>`:''}<div class="panel"><div style="font-size:15px">描いたものを選ぶ（2つまで）</div><div class="feat">${FEATURES.map(g=>`<h4>${{a:'攻撃の証',d:'守護の証',h:'剛体の証',s:'疾風の証'}[g.k]}</h4>`+g.items.map(it=>`<button data-ft="${it}" class="${C.features.includes(it)?'on':''}">${it}</button>`).join('')).join('')}</div>
     <div class="muted" style="margin-top:8px">何も選ばなければ「バランス型」となる。絵の巧拙は問わない。</div></div>
     <button class="btn orange" data-go>🔍 鑑定開始</button>`,'dim');
   bindBack(d,()=>createInfo(C));
-  $$('[data-ft]',d).forEach(b=>b.onclick=()=>{const f=b.dataset.ft;if(C.features.includes(f))C.features=C.features.filter(x=>x!==f);else{if(C.features.length>=2){toast('選べるのは二つまで');return}C.features.push(f)}
+  $$('[data-ft]',d).forEach(b=>b.onclick=()=>{const f=b.dataset.ft;if(C.features.includes(f))C.features=C.features.filter(x=>x!==f);else{if(C.features.length>=2){toast('選べるのは2つまで');return}C.features.push(f)}
     $$('[data-ft]',d).forEach(x=>x.classList.toggle('on',C.features.includes(x.dataset.ft)))});
   $('[data-go]',d).onclick=()=>{C.ai=false;C.comment='';C.alias='';C.feats=C.features.map(f=>({name:f,stat:featCat(f)}));kanteiAnim(C)};
 }
@@ -1100,7 +1101,7 @@ async function kanteiAnim(C){
   const d=screen(hdr('鑑定の儀',false)+`<div class="kantei"><div class="scan"><img src="${C.final}" alt=""></div>${lines.map(l=>`<div class="kline">${l}</div>`).join('')}${C.comment?`<div class="kline" style="font-size:14px;color:#d8d3c6">「${esc(C.comment)}」</div>`:''}
     <div class="kres">判定：${t.n}</div>${C.alias?`<div class="kline" data-alias style="font-size:16px">二つ名：<b>${esc(C.alias)}</b></div>`:''}</div>
     <div class="panel statbox" style="opacity:0" data-sb>${['a','d','h','s'].map(k=>`<div class="st"><span>${STAT_NAMES[k]}</span><div class="g"><i data-g="${k}"></i></div><b>${t[k]}</b></div>`).join('')}<div class="muted">HP ${maxHpOf(type)}　合計120</div></div>
-    <div class="spacer"></div><div class="row"><button class="btn gray small" data-re style="visibility:hidden">${C.ai?'再鑑定':'選び直す'}</button><button class="btn orange small" data-ok style="visibility:hidden">✔ この力を受け入れる</button></div>`,'dim');
+    <div class="spacer"></div><div class="row"><button class="btn gray small" data-re style="visibility:hidden">${C.ai?'再鑑定':'選び直す'}</button><button class="btn orange small" data-ok style="visibility:hidden">✔ このキャラで決定</button></div>`,'dim');
   await sleep(900);
   for(const el of $$('.kline',d)){el.classList.add('on');await sleep(650)}
   $('.scan',d).classList.remove('scan');
