@@ -350,7 +350,7 @@ function normHands(raw){const o={};for(const k of ['R','S','P']){let v=Math.roun
 function handsText(h){const parts=['R','S','P'].filter(k=>h[k]).map(k=>`${HAND_NAME[k]}${h[k]>0?'+':'−'}${Math.abs(h[k])}`);return parts.length?parts.join('・'):'得手不得手なし'}
 function atkMod(a){return a===10?[-10,2]:a===20?[-10,1]:a===40?[10,1]:a===50?[10,2]:[0,0]}
 function defMod(d){return d===10?[10,2]:d===20?[10,1]:d===40?[-10,1]:d===50?[-10,2]:[0,0]}
-function inputTime(mySpd,opSpd){return 8+(mySpd-opSpd)/80}
+function inputTime(mySpd,opSpd){return 12+(mySpd-opSpd)/80}
 function mikiriCount(s0,s1){return Math.min(3,Math.floor(Math.abs(s0-s1)/10))}
 
 /* ========= special FX detection ========= */
@@ -647,7 +647,7 @@ function showHome(){
 function showHowto(){
   const d=screen(hdr('決闘の掟')+`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
     <p style="margin-top:0"><b>Ⅰ　召喚</b><br>紙に描いた戦士を撮影し、名と必殺技を刻め。その姿に宿る力は、AIが鑑定する。</p>
-    <p><b>Ⅱ　六手を刻む</b><br>グー・チョキ・パーを六度選べ。猶予は約8秒。敵に手の内は見えない。</p>
+    <p><b>Ⅱ　六手を刻む</b><br>グー・チョキ・パーを六度選べ。猶予は約12秒。敵に手の内は見えない。</p>
     <p><b>Ⅲ　必殺技</b><br>第二ターンより解放。六手のどこにでも「必殺」を仕込める。1ターンに一度きり。あらゆる手を打ち破り80ダメージ。必殺技同士は相殺する。</p>
     <p><b>Ⅳ　見切り</b><br>速さで勝る者は、拮抗の刹那に「見切り」を放ち10ダメージを与える。速さの差10ごとに、1ターンの発動回数が1増える（最大3回）。</p>
     <p style="margin-bottom:0"><b>Ⅴ　決着</b><br>敵のHPを0にするか、三ターン終了時に多くのHPを残した者が勝者となる。</p></div>`,'dim');
