@@ -1,0 +1,10 @@
+{
+  // キャラ鑑定サーバー（OPENAI_API_KEY は Cloudflare の画面でシークレットとして登録済み）
+  "name": "saikyo-kantei",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  "vars": {
+    "ALLOWED_ORIGINS": "https://saikyo-royale.getup117.workers.dev"
+  },
+  "observability": { "enabled": true }
+}

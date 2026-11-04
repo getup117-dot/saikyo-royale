@@ -1,0 +1,6 @@
+{
+  // ゲーム本体（public フォルダの中身をそのまま公開）
+  "name": "saikyo-royale",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./public" }
+}
