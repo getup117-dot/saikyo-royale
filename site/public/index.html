@@ -342,13 +342,16 @@ const maxHpOf=t=>180+2*TYPES[t].h;
 function nearestType(st){let best='balance',bd=1e9;for(const [k,t] of Object.entries(TYPES)){const d=Math.abs(t.a-st.a)+Math.abs(t.d-st.d)+Math.abs(t.h-st.h)+Math.abs(t.s-st.s);if(d<bd){bd=d;best=k}}return best}
 function validStats(x){return x&&['a','d','h','s'].every(k=>Number.isFinite(x[k]))}
 function statsOf(ch){if(validStats(ch.stats)){const t=ch.stats;return {n:ch.style||TYPES[nearestType(t)].n,a:t.a,d:t.d,h:t.h,s:t.s}}return TYPES[ch.type]||TYPES.balance}
-function handsOf(ch){const h=ch.hands||{};const v=k=>Number.isFinite(h[k])?h[k]:0;return {R:v('R'),S:v('S'),P:v('P')}}
+function handsOf(ch){const h=ch.hands||{};const v=k=>Number.isFinite(h[k])?h[k]:0;return normHands({R:v('R'),S:v('S'),P:v('P')})}
 function hpOf(t){return 180+2*t.h}
 function normStats(raw){const st={};for(const k of ['a','d','h','s']){let v=Math.round((+raw[k]||30)/10)*10;st[k]=Math.min(50,Math.max(10,v))}
   const order=['a','d','h','s'].sort((x,y)=>(+raw[y]||0)-(+raw[x]||0));let sum=st.a+st.d+st.h+st.s,guard=40;
   while(sum!==120&&guard-->0){if(sum>120){const k=[...order].reverse().find(k=>st[k]>10)||order.find(k=>st[k]>10);st[k]-=10;sum-=10}else{const k=order.find(k=>st[k]<50);st[k]+=10;sum+=10}}
   return st}
-function normHands(raw){const o={};for(const k of ['R','S','P']){let v=Math.round((+((raw||{})[k])||0)/10)*10;o[k]=Math.min(20,Math.max(-20,v))}return o}
+function normHands(raw){const o={};for(const k of ['R','S','P']){let v=Math.round((+((raw||{})[k])||0)/10)*10;o[k]=Math.min(20,Math.max(-20,v))}
+  let sum=o.R+o.S+o.P,guard=12;const ks=['R','S','P'];
+  while(sum!==0&&guard-->0){if(sum>0){const k=ks.filter(k=>o[k]>-20).sort((x,y)=>o[x]-o[y])[0];o[k]-=10;sum-=10}else{const k=ks.filter(k=>o[k]<20).sort((x,y)=>o[x]-o[y])[0];o[k]+=10;sum+=10}}
+  return o}
 function handsText(h){const parts=['R','S','P'].filter(k=>h[k]).map(k=>`${HAND_NAME[k]}${h[k]>0?'+':'−'}${Math.abs(h[k])}`);return parts.length?parts.join('・'):'得手不得手なし'}
 function atkMod(a){return a===10?[-10,2]:a===20?[-10,1]:a===40?[10,1]:a===50?[10,2]:[0,0]}
 function defMod(d){return d===10?[10,2]:d===20?[10,1]:d===40?[-10,1]:d===50?[-10,2]:[0,0]}
@@ -397,6 +400,8 @@ const fxLabel=fx=>fx.attrs.map(a=>ATTRS[a].n).join('×')+'・'+MOTIONS[fx.motion
 
 /* ========= battle engine ========= */
 const BEATS={R:'S',S:'P',P:'R'};
+const SPECIAL_DMG=50;
+let MIKIRI_DMG=10;
 const KANJI_NUM=['','一','二','三','四','五','六'];
 function newFighter(ch){const t=statsOf(ch);return {ch,t,hands:handsOf(ch),maxHp:hpOf(t),hp:hpOf(t),specialUsed:false,taken:0}}
 function newTurnMods(f){const am=atkMod(f.t.a),dm=defMod(f.t.d);return {atk:am[0],atkLeft:am[1],atkN:am[1],def:dm[0],defLeft:dm[1],defN:dm[1]}}
@@ -408,9 +413,9 @@ function resolveTurn(F,H,turn,stats){
     const a=H[0][i],b=H[1][i];const e={i,a,b};
     if(a==='X')F[0].specialUsed=true; if(b==='X')F[1].specialUsed=true;
     if(a==='X'&&b==='X'){e.kind='clash';combo=[0,0]}
-    else if(a==='X'||b==='X'){const w=a==='X'?0:1;e.kind='special';e.w=w;e.dmg=80;combo[w]++;combo[1-w]=0;stats[w].specialHit=true}
+    else if(a==='X'||b==='X'){const w=a==='X'?0:1;e.kind='special';e.w=w;e.dmg=SPECIAL_DMG;combo[w]++;combo[1-w]=0;stats[w].specialHit=true}
     else if(a===b){e.kind='tie';combo=[0,0];
-      if(spdWin>=0&&mikiriLeft>0){mikiriLeft--;e.mikiri=spdWin;e.dmg=10;stats[spdWin].mikiri++}}
+      if(spdWin>=0&&mikiriLeft>0){mikiriLeft--;e.mikiri=spdWin;e.dmg=MIKIRI_DMG;stats[spdWin].mikiri++}}
     else{const w=BEATS[a]===b?0:1;const l=1-w;let dmg=30+((F[w].hands||{})[w===0?a:b]||0);e.handMod=((F[w].hands||{})[w===0?a:b]||0);
       if(mods[w].atkLeft>0){dmg+=mods[w].atk;mods[w].atkLeft--;e.atkUsed=true}
       if(mods[l].defLeft>0){dmg+=mods[l].def;mods[l].defLeft--;e.defUsed=true}
@@ -437,7 +442,12 @@ function cpuHands(M,side){
     else if(lv==='normal'){const hs=me.hands||{R:0,S:0,P:0};const top=['R','S','P'].sort((x,y)=>hs[y]-hs[x])[0];const b=hs[top]>0?top:TYPE_BIAS[me.ch.type];h.push(b&&Math.random()<.45?b:randHand())}
     else{
       const prev=M.history.length?M.history[M.history.length-1][1-side]:null;
-      if(prev&&Math.random()<.55){const cnt={R:0,S:0,P:0};prev.forEach(x=>{if(cnt[x]!=null)cnt[x]++});
+      const oh=opp.hands||{R:0,S:0,P:0};const oTop=['R','S','P'].sort((x,y)=>oh[y]-oh[x])[0];
+      const mh=me.hands||{R:0,S:0,P:0};const mTop=['R','S','P'].sort((x,y)=>mh[y]-mh[x])[0];
+      const r=Math.random();
+      if(oh[oTop]>0&&r<.3){h.push({R:'P',S:'R',P:'S'}[oTop])}
+      else if(mh[mTop]>0&&r<.5){h.push(mTop)}
+      else if(prev&&r<.8){const cnt={R:0,S:0,P:0};prev.forEach(x=>{if(cnt[x]!=null)cnt[x]++});
         const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];const counter={R:'P',S:'R',P:'S'}[top];h.push(counter)}
       else h.push(randHand());
     }
@@ -622,8 +632,8 @@ async function svgToSticker(svg){const im=await loadImage('data:image/svg+xml;ch
   const c=canvasOf(440,Math.round(440*im.height/im.width));c.getContext('2d').drawImage(im,0,0,c.width,c.height);return exportImg(stickerize(c,420))}
 async function buildSamples(){
   const base=[
-    {id:'s1',builtin:true,name:'ファイヤーヒーロー',special:'スーパーほのおパンチ',desc:'燃え盛る拳が、敵を灰に還す。',bio:'炎の街を守る孤高の拳士。',alias:'紅蓮の拳士',features:['大きなこぶし','マント'],hands:{R:20,S:0,P:-10},svg:HERO_SVG},
-    {id:'s2',builtin:true,name:'パクリュウ',special:'かみつきアタック',desc:'その牙は、鋼すら噛み砕く。',bio:'鉄の山を喰らい続けた古竜。',alias:'鋼喰らいの古竜',features:['キバ・ツメ','かたいウロコ'],hands:{R:0,S:10,P:0},svg:DRAGON_SVG}
+    {id:'s1',builtin:true,name:'ファイヤーヒーロー',special:'スーパーほのおパンチ',desc:'燃え盛る拳が、敵を灰に還す。',bio:'炎の街を守る孤高の拳士。',alias:'紅蓮の拳士',features:['大きなこぶし','マント'],hands:{R:20,S:0,P:-20},svg:HERO_SVG},
+    {id:'s2',builtin:true,name:'パクリュウ',special:'かみつきアタック',desc:'その牙は、鋼すら噛み砕く。',bio:'鉄の山を喰らい続けた古竜。',alias:'鋼喰らいの古竜',features:['キバ・ツメ','かたいウロコ'],hands:{R:0,S:10,P:-10},svg:DRAGON_SVG}
   ];
   const out=[];
   for(const b of base){let img='';try{img=await svgToSticker(b.svg)}catch(e){img='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(b.svg)}
@@ -650,7 +660,7 @@ function showHowto(){
   const d=screen(hdr('決闘の掟')+`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
     <p style="margin-top:0"><b>Ⅰ　召喚</b><br>紙に描いた戦士を撮影し、名と必殺技を刻め。その姿に宿る力は、AIが鑑定する。</p>
     <p><b>Ⅱ　六手を刻む</b><br>グー・チョキ・パーを六度選べ。猶予は約12秒。敵に手の内は見えない。</p>
-    <p><b>Ⅲ　必殺技</b><br>第二ターンより解放。六手のどこにでも「必殺」を仕込める。1ターンに一度きり。あらゆる手を打ち破り80ダメージ。必殺技同士は相殺する。</p>
+    <p><b>Ⅲ　必殺技</b><br>第二ターンより解放。六手のどこにでも「必殺」を仕込める。1ターンに一度きり。あらゆる手を打ち破り50ダメージ。必殺技同士は相殺する。</p>
     <p><b>Ⅳ　見切り</b><br>速さで勝る者は、拮抗の刹那に「見切り」を放ち10ダメージを与える。速さの差10ごとに、1ターンの発動回数が1増える（最大3回）。</p>
     <p style="margin-bottom:0"><b>Ⅴ　決着</b><br>敵のHPを0にするか、三ターン終了時に多くのHPを残した者が勝者となる。</p></div>`,'dim');
   bindBack(d,showHome);
@@ -832,7 +842,7 @@ async function playEvent(stage,d,M,e){
     const l=e.tgt;const fl=fighterEl(stage,l);impactAt(stage,l===0?24:76,52,1.8);
     {const fx=M.F[e.w].ch.fx||detectFx(M.F[e.w].ch.special);const im=document.createElement('img');im.className='fxim';im.src=FXIMG[fx.attrs[0]];
       im.style.cssText+=`width:60%;left:${l===0?-6:46}%;top:20%;z-index:6`;stage.appendChild(im);
-      anim(im,[{transform:'scale(.3)',opacity:1},{transform:'scale(1.15) rotate(15deg)',opacity:0}],{duration:650}).then(()=>im.remove())}shake(d);popAt(stage,l,'-80');
+      anim(im,[{transform:'scale(.3)',opacity:1},{transform:'scale(1.15) rotate(15deg)',opacity:0}],{duration:650}).then(()=>im.remove())}shake(d);popAt(stage,l,'-'+SPECIAL_DMG);
     anim(fl,[{transform:'none'},{transform:`translateX(${l===0?-40:40}px) rotate(${l===0?-24:24}deg)`,offset:.4},{transform:'none'}],{duration:600});
     await callout(stage,e.combo>=2?`${e.combo} COMBO!`:'必殺技炸裂','',600);return}
   if(e.kind==='clash'){await playClash(M);impactAt(stage,50,50,1.6);shake(d);await callout(stage,'相殺！','white',700);return}
@@ -1060,7 +1070,7 @@ function kanteiPrompt(C){return `子どもが紙に描いたオリジナルキ�
 絵をよく見て、このキャラの能力を自由に決めてください。強さのバランスは気にしなくてよいので、絵と設定から感じたとおりに極端に振り分けてかまいません。
 1. features：目立つ特徴を0〜3つ。決まったリストはない。それぞれ一番つながる能力（attack/defense/hp/speed）も付ける
 2. stats：攻撃(attack)・防御(defense)・体力(hp)・すばやさ(speed)に、合計120ポイントを配る。各10〜50、10刻み
-3. hands：このキャラのグー(rock)・チョキ(scissors)・パー(paper)の得意不得意。勝ったときのダメージ補正で、各 -20, -10, 0, 10, 20 のどれか。殴る系はグー、刃物や爪はチョキ、手のひら・魔法・包む系はパー、などキャラに合わせて。全部0でもよい
+3. hands：このキャラのグー(rock)・チョキ(scissors)・パー(paper)の得意不得意。勝ったときのダメージ補正で、各 -20, -10, 0, 10, 20 のどれか。3つの合計は必ず0にする（得意な手がある分、苦手な手を作る。例：20/0/-20、10/10/-20、全部0）。殴る系はグー、刃物や爪はチョキ、手のひら・魔法・包む系はパー、などキャラに合わせて
 4. hand_note：hands の理由を20文字以内で
 5. style：このキャラの戦い方を表す「〇〇型」を8文字以内で（例：「一撃必殺型」「鉄壁要塞型」）
 6. alias：厨二病っぽい二つ名を12文字以内で（例：「漆黒の翼竜」「終焉を告げる者」）
@@ -1164,7 +1174,7 @@ function showCreated(ch,onDone){
   S.chars=samples.concat(loadUserChars().filter(c=>c&&c.img&&(TYPES[c.type]||validStats(c.stats))));
   showHome();
 })();
-window.__game={S,TYPES,normStats,normHands,statsOf,cleanKantei,typeFromCats,resolveTurn,detectFx,fxCandidates,typeFromFeatures,newFighter,cpuHands,setSpeed:v=>SPEED=v};
+window.__game={setMikiri:v=>MIKIRI_DMG=v,S,TYPES,normStats,normHands,statsOf,cleanKantei,typeFromCats,resolveTurn,detectFx,fxCandidates,typeFromFeatures,newFighter,cpuHands,setSpeed:v=>SPEED=v};
 </script>
 </body>
 </html>
