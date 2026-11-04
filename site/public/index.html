@@ -996,7 +996,6 @@ function showResult(){
     ${w>=0?`<div style="text-align:center;font-size:20px">${esc(wf.ch.name)}</div><div class="titles">${titles.slice(0,2).map(t=>`<span>${t}</span>`).join('')}</div>
       <div class="quote">「${esc(winQuote(wf.ch))}」</div>`:''}
     <div class="narr">${esc(narration(M,w))}</div>
-    ${w>=0?`<div class="loser"><b>${sideTag(1-w,M)}　${esc(M.F[1-w].ch.name)}</b>「${esc(loseQuote(M.F[1-w].ch))}」<small>${loserLine(M,w)}</small></div>`:''}
     <div class="muted" style="text-align:center">残存HP　${sideTag(0,M)} ${A.hp} ／ ${sideTag(1,M)} ${B.hp}</div>
     <button class="btn orange" data-again>⟳ 再戦</button>
     <div class="row"><button class="btn blue small" data-change>👤 キャラを変える</button><button class="btn gray small" data-home>ホーム</button></div>`,'');
