@@ -272,6 +272,17 @@ button{font:inherit;color:inherit;cursor:pointer}
 .cpulv button.on{background:var(--amber);color:#1b1100}
 .modal{position:absolute;inset:0;background:#000b;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal .panel{width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}
+/* tutorial coach */
+.coach{position:fixed;inset:0;z-index:60;pointer-events:auto}
+.coach.act{pointer-events:none}
+.coach.full{background:#000b}
+.coach .hole{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px #000b;outline:3px solid var(--amber);transition:all .25s;pointer-events:none}
+.coach.act .hole{animation:holepulse 1.1s ease-in-out infinite}
+@keyframes holepulse{50%{outline-color:#fff}}
+.coach .bub{position:fixed;left:12px;right:12px;max-width:440px;margin:0 auto;background:#fff8e6;color:#201000;border:3px solid var(--line);border-radius:14px;padding:12px 14px;font-size:15px;font-weight:700;line-height:1.6;box-shadow:0 6px 0 #0006;pointer-events:none}
+.coach .bub small{display:block;margin-top:6px;font-size:12px;color:#8a6a2a;font-weight:700}
+.coach .bub b{color:#c2410c}
+.coach .skip{position:fixed;right:10px;top:10px;pointer-events:auto;background:#0009;color:#fff;border:2px solid #fff6;border-radius:999px;padding:6px 12px;font-size:13px}
 </style>
 </head>
 <body>
@@ -455,7 +466,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const app=$('#app');
 function anim(el,kf,opt){if(!el||!el.animate)return Promise.resolve();const a=el.animate(kf,Object.assign({fill:'none'},opt,{duration:(opt.duration||300)*SPEED,delay:(opt.delay||0)*SPEED}));return a.finished.catch(()=>{})}
 function toast(msg,ms=2200){const t=document.createElement('div');t.className='toast';t.textContent=msg;app.appendChild(t);setTimeout(()=>t.remove(),ms)}
-function screen(html,cls=''){app.innerHTML='';const d=document.createElement('div');d.className='screen '+cls;d.innerHTML=html;app.appendChild(d);d.scrollTop=0;return d}
+function screen(html,cls=''){document.querySelectorAll('.coach').forEach(e=>e.remove());app.innerHTML='';const d=document.createElement('div');d.className='screen '+cls;d.innerHTML=html;app.appendChild(d);d.scrollTop=0;return d}
 const hdr=(title,back=true)=>`<div class="hdr">${back?'<button class="back" data-back>←</button>':''}<h2>${title}</h2><img class="emb" src="${AS.emblem}" alt=""></div>`;
 function bindBack(d,fn){const b=$('[data-back]',d);if(b)b.onclick=fn}
 function starsHTML(t){if(typeof t==='string')t=TYPES[t];return '<div class="stars">'+['a','d','h','s'].map(k=>`<div><span>${STAT_NAMES[k]}</span><span><i>${'★'.repeat(t[k]/10)}</i><em>${'★'.repeat(5-t[k]/10)}</em></span></div>`).join('')+'</div>'}
@@ -639,17 +650,71 @@ function showHome(){
   $('[data-create]',d).onclick=()=>showCreate();
   $('[data-battle]',d).onclick=()=>showMode();
   $('[data-zukan]',d).onclick=()=>showZukan();
-  $('[data-howto]',d).onclick=()=>showHowto();
+  $('[data-howto]',d).onclick=()=>startTutorial();
 }
-function showHowto(){
-  const d=screen(hdr('あそび方')+`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
+const RULES_HTML=`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
     <p style="margin-top:0"><b>1　キャラをつくる</b><br>紙に描いたキャラを撮影して、名前と必殺技を入れる。AIが絵を見て、能力（攻撃・防御・体力・すばやさ、合計120）と、グー・チョキ・パーの相性を決める。</p>
     <p><b>2　6回分の手を決める</b><br>1ターンに、グー・チョキ・パーを6回分まとめて選ぶ。時間は約12秒。相手には見えない。</p>
     <p><b>3　必殺技</b><br>2ターン目から、6回のうち好きな順番に「必殺」を入れられる（1ターンに1回）。どの手にも勝って50ダメージ。必殺どうしは引き分け。</p>
     <p><b>4　見切り</b><br>あいこのとき、すばやさが高いほうが10ダメージを与える。すばやさの差10ごとに1回、1ターン最大3回まで。</p>
     <p><b>5　グー・チョキ・パーの相性</b><br>キャラごとに得意な手と苦手な手がある。得意な手で勝つとダメージが増え、苦手な手だと減る（3つの合計は0）。相手の相性は、手を選ぶ画面のボタンに＋／−で出る。</p>
-    <p style="margin-bottom:0"><b>6　勝ち負け</b><br>相手のHPを0にしたら勝ち。3ターン終わったら、HPが多く残っているほうの勝ち。</p></div>`,'dim');
-  bindBack(d,showHome);
+    <p style="margin-bottom:0"><b>6　勝ち負け</b><br>相手のHPを0にしたら勝ち。3ターン終わったら、HPが多く残っているほうの勝ち。</p></div>`;
+/* ========= tutorial ========= */
+const TUT_CPU={1:['R','S','P','R','P','S'],2:['P','R','X','S','R','P']};
+function startTutorial(){
+  const c0=S.chars.find(c=>c.id==='s1')||S.chars[0],c1=S.chars.find(c=>c.id==='s2')||S.chars[1]||S.chars[0];
+  S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:true,cpuLevel:'weak',tut:true,
+    stats:[{mikiri:0,maxCombo:0,specialFinish:false,behind:false},{mikiri:0,maxCombo:0,specialFinish:false,behind:false}],hands:[null,null]};
+  showPrep();
+}
+function coach(steps){return new Promise(async res=>{
+  document.querySelectorAll('.coach').forEach(e=>e.remove());
+  const o=document.createElement('div');o.className='coach';o.innerHTML='<div class="hole"></div><div class="bub"><div data-tx></div><small data-ft></small></div><button class="skip" data-skip>説明をとばす</button>';
+  document.body.appendChild(o);const hole=$('.hole',o),bub=$('.bub',o);let skipped=false;
+  $('[data-skip]',o).onclick=e=>{e.stopPropagation();skipped=true;o.remove();if(S.match)S.match.tutSkip=true;res()};
+  const list=steps.filter(st=>!st.sel||document.querySelector(st.sel));
+  for(let i=0;i<list.length;i++){const st=list[i];if(skipped||!document.body.contains(o))return;
+    const el=st.sel?document.querySelector(st.sel):null;
+    o.classList.toggle('full',!el);o.classList.toggle('act',!!st.wait);
+    if(el){el.scrollIntoView({block:'nearest'});const rs=[el,...(st.also||[]).map(q=>document.querySelector(q)).filter(Boolean)].map(e=>e.getBoundingClientRect());
+      const r={left:Math.min(...rs.map(x=>x.left)),top:Math.min(...rs.map(x=>x.top)),right:Math.max(...rs.map(x=>x.right)),bottom:Math.max(...rs.map(x=>x.bottom))};r.width=r.right-r.left;r.height=r.bottom-r.top;const p=5;
+      Object.assign(hole.style,{display:'block',left:(r.left-p)+'px',top:(r.top-p)+'px',width:(r.width+2*p)+'px',height:(r.height+2*p)+'px'});
+      const below=r.top+r.height/2<innerHeight/2;bub.style.top=below?Math.min(r.bottom+14,innerHeight-160)+'px':'';bub.style.bottom=below?'':Math.min(innerHeight-r.top+14,innerHeight-160)+'px'}
+    else{hole.style.display='none';bub.style.top='34%';bub.style.bottom=''}
+    $('[data-tx]',o).innerHTML=st.text;$('[data-ft]',o).textContent=st.wait?'やってみよう':`タップで次へ（${i+1}/${list.length}）`;
+    await new Promise(r2=>{if(st.wait){const w=document.querySelector(st.wait);if(!w)return r2();const h=()=>{w.removeEventListener('click',h,true);r2()};w.addEventListener('click',h,true)}
+      else o.onclick=()=>{o.onclick=null;r2()}});
+  }
+  o.remove();res()})}
+function tutPrep(d){
+  coach([
+    {text:'ここでは、<b>実際の画面</b>を使ってあそび方を説明する。<br>まずは、バトル前の画面から。'},
+    {sel:'.pcard',text:'これが<b>自分のキャラ</b>。<br>紙に描いた絵を撮影すると、AIが能力（攻撃・防御・体力・すばやさ、合計120）を決める。★が多いほど高い。'},
+    {sel:'[data-tut="hands0"]',text:'<b>グー・チョキ・パーの相性</b>。<br>＋の手で勝つとダメージが増え、−の手だと減る。'},
+    {sel:'.pcard:last-child',text:'こっちが<b>相手（CPU）</b>。相手の能力や相性も、ここで確認できる。'},
+    {sel:'[data-tut="spd"]',text:'<b>すばやさ</b>が高いほど、手を選ぶ時間が少し長い。<br>さらに、あいこのとき<b>「見切り」</b>で10ダメージを与えられる。'},
+    {sel:'[data-ok]',wait:'[data-ok]',text:'「<b>バトル開始</b>」を押そう。'}]);
+}
+function tutInput(d,M){
+  if(M.tutSkip)return;
+  if(M.turn===1)coach([
+    {sel:'.hpbar',text:'上は<b>HP</b>。0になったら負け。<br>3ターン終わったら、HPが多く残っているほうの勝ち。'},
+    {sel:'.hpanel',text:'<b>相手の相性</b>。相手が＋の手で勝つと、こっちのダメージが大きい。<br>相手の得意な手には、勝てる手を出そう。'},
+    {sel:'[data-slots]',text:'1ターンに<b>6回</b>じゃんけんする。<br>その6手を、ここに<b>まとめて先に</b>決める。相手には見えない。'},
+    {sel:'.pick',text:'押した順に、1番目から入る。<br>ボタンの＋／−は<b>自分の相性</b>。'},
+    {sel:'[data-timer]',text:'本番は<b>約12秒</b>で選ぶ（時間切れだと、残りはランダム）。<br>今回は時間切れなし。'},
+    {sel:'[data-slots]',also:['.pick','[data-done]'],wait:'[data-done]',text:'グー・チョキ・パーを<b>6回</b>押して、「<b>確定</b>」を押そう。<br>まちがえたら「戻す」。'}]);
+  else if(M.turn===2)coach([
+    {sel:'.prev',text:'<b>前のターンの手</b>。相手のクセを読む材料にしよう。'},
+    {sel:'[data-h="X"]',text:'2ターン目から<b>「必殺」</b>が使える。<br>1ターンに1回、<b>どの手にも勝って50ダメージ</b>。6手のどこに入れてもいい（必殺どうしは引き分け）。'},
+    {sel:'[data-slots]',also:['.pick','[data-done]'],wait:'[data-done]',text:'「<b>必殺</b>」を1つ入れて、6手を<b>確定</b>しよう。'}]);
+}
+function tutEnd(){
+  S.match=null;
+  const d=screen(hdr('あそび方',false)+`<div class="panel" style="text-align:center"><div style="font-family:var(--head);font-size:24px;color:var(--amber)">チュートリアル完了</div>
+    <div class="muted" style="margin-top:4px">本番は3ターン戦う。ルールのまとめは下のとおり。</div></div>`+RULES_HTML+`
+    <button class="btn orange" data-create>✎ キャラをつくる</button><button class="btn blue" data-battle>⚔ バトルする</button><button class="btn gray small" data-home>トップに戻る</button>`,'dim');
+  $('[data-create]',d).onclick=()=>showCreate();$('[data-battle]',d).onclick=()=>showMode();$('[data-home]',d).onclick=()=>showHome();
 }
 function showZukan(){
   const d=screen(hdr('キャラ一覧')+`<div class="grid">${S.chars.map(c=>`<div class="ccard"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${esc(statsOf(c).n)}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${c.builtin?'':`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
@@ -704,19 +769,20 @@ function startMatch(){
 const sideTag=(s,M)=>s===0?'1P':(M.cpu?'CPU':'2P');
 function showPrep(){
   const M=S.match;const [A,B]=M.F;
-  const card=(f,s)=>`<div class="pcard"><span class="ptag p${s+1}">${sideTag(s,M)}</span><img src="${f.ch.img}" alt=""><div class="nm">${esc(f.ch.name)}</div>${f.ch.alias?`<div class="sp" style="color:#f2c46b">${esc(f.ch.alias)}</div>`:''}<div class="sp">${esc(f.ch.special)}</div><div class="ty">${esc(f.t.n)}・HP${f.maxHp}</div>${starsHTML(f.t)}<div class="sp" style="margin-top:3px">${handsText(f.hands)}</div></div>`;
+  const card=(f,s)=>`<div class="pcard"><span class="ptag p${s+1}">${sideTag(s,M)}</span><img src="${f.ch.img}" alt=""><div class="nm">${esc(f.ch.name)}</div>${f.ch.alias?`<div class="sp" style="color:#f2c46b">${esc(f.ch.alias)}</div>`:''}<div class="sp">${esc(f.ch.special)}</div><div class="ty">${esc(f.t.n)}・HP${f.maxHp}</div>${starsHTML(f.t)}<div class="sp" data-tut="hands${s}" style="margin-top:3px">${handsText(f.hands)}</div></div>`;
   const d=screen(hdr('決戦前夜')+`<div class="versus">${card(A,0)}<div class="vsmall">VS</div>${card(B,1)}</div>
-    <div class="muted" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}は見切り：1ターン${mikiriCount(A.t.s,B.t.s)}回まで`}</div>
+    <div class="muted" data-tut="spd" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}は見切り：1ターン${mikiriCount(A.t.s,B.t.s)}回まで`}</div>
     <div class="spacer"></div>
     ${M.cpu?'':'<div class="panel handoff" style="padding:8px;flex-direction:row;justify-content:center;gap:12px"><img class="hoimg" src="'+AS.handoff+'" alt="" style="width:84px"><h3 style="font-size:22px">スマホを1Pに渡す</h3></div>'}
     <button class="btn orange" data-ok>${M.cpu?'バトル開始':'準備OK'}</button>`,'dim');
-  bindBack(d,()=>showSelect(1));
+  bindBack(d,()=>M.tut?(S.match=null,showHome()):showSelect(1));
   $('[data-ok]',d).onclick=()=>beginTurn();
+  if(M.tut)tutPrep(d);
 }
 function turnOrder(M){return M.turn===2?[1,0]:[0,1]}
 function beginTurn(){
   const M=S.match;M.hands=[null,null];M.F[0].specialUsed=false;M.F[1].specialUsed=false;
-  if(M.cpu){M.hands[1]=cpuHands(M,1);showInput(0,()=>playTurn())}
+  if(M.cpu){M.hands[1]=M.tut&&TUT_CPU[M.turn]?TUT_CPU[M.turn].slice():cpuHands(M,1);showInput(0,()=>playTurn())}
   else{const [f,s]=turnOrder(M);
     const after=()=>showHandoff(s,()=>showInput(s,()=>playTurn()));
     if(M.turn===1)showInput(f,after);else showHandoff(f,()=>showInput(f,after));}
@@ -766,11 +832,12 @@ function showInput(side,done){
   const finish=(timeout)=>{if(finished)return;finished=true;clearInterval(iv);if(!alive(M))return;
     const missing=6-hands.length;while(hands.length<6)hands.push(randHand());M.hands[side]=hands.slice();
     if(timeout){render();toast(missing>0?'時間切れ。残りの手はランダムで入った':'時間切れ。この6手で決定',1400);setTimeout(()=>{if(alive(M))done()},900*SPEED)}else done()};
-  const iv=setInterval(()=>{const left=limit-(performance.now()-t0)/1000/SPEED;
+  const iv=M.tut?0:setInterval(()=>{const left=limit-(performance.now()-t0)/1000/SPEED;
     if(!document.body.contains(tEl)||!alive(M)){clearInterval(iv);return}
     tEl.textContent=Math.max(0,Math.ceil(left));tw.style.setProperty('--p',Math.max(0,left/limit*100)+'%');tw.classList.toggle('warn',left<3.5);
     if(left<=0)finish(true)},100);
   $('[data-done]',d).onclick=()=>finish(false);
+  if(M.tut)tutInput(d,M);
 }
 
 /* ========= battle playback ========= */
@@ -800,8 +867,9 @@ async function playTurn(){
   await sleep(400);
   if(!alive(M)){SPEED=baseSpeed;return}
   const ko=M.F[0].hp<=0||M.F[1].hp<=0;
-  if(ko){await callout(stage,'K.O.!','white',900);SPEED=baseSpeed;if(alive(M))showResult();return}
+  if(ko){await callout(stage,'K.O.!','white',900);SPEED=baseSpeed;if(alive(M))(M.tut?tutEnd():showResult());return}
   for(const s of [0,1])if(M.F[s].hp<M.F[1-s].hp)M.stats[s].behind=true;
+  if(M.tut&&M.turn>=2){SPEED=baseSpeed;return tutEnd()}
   if(M.turn>=3){SPEED=baseSpeed;return showResult()}
   M.turn++;await callout(stage,`第${KANJI_NUM[M.turn]}ターン`,'white',600);SPEED=baseSpeed;if(alive(M))beginTurn();
 }
