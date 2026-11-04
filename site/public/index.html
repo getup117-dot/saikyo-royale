@@ -269,12 +269,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .hidbadge.onl{background:#1f6fb8}
 .sp.author{color:#9cc2ff;font-size:11px}
 .ccard .arena{font-size:11px;color:#9cc2ff;margin-top:4px;line-height:1.5}.ccard .arena b{color:#ffcf3a}
-.btn.pubdone:disabled{opacity:1;filter:none;background:#2e5a3a;color:#d8f5df;font-size:16px}
+.pubdone{text-align:center;color:#9be3ae;font-weight:700;font-size:14px;margin-bottom:-4px}
 .cidbtn{display:block;margin:4px auto 0;background:#0005;color:#d8d3c6;border:1px dashed #ffffff55;border-radius:8px;padding:2px 8px;font:inherit;font-size:11px;font-family:ui-monospace,Menlo,monospace}
 .cidbtn.big{font-size:15px;padding:8px 14px;color:#fff}
 .srch{display:flex;gap:6px}.srch input{flex:1;min-width:0;border:2px solid var(--line);border-radius:10px;background:#f6f3ec;color:#111;font:inherit;font-size:16px;padding:10px 12px}.srch .btn{width:auto;padding:8px 14px}
 .rrow .btn.small{width:auto;padding:7px 10px;font-size:13px;flex-shrink:0}
 .tagmini{font-size:11px;background:#4a4d55;color:#fff;border-radius:999px;padding:3px 8px;flex-shrink:0}.tagmini.on{background:#2e5a3a}
+.sharebar{display:flex;gap:8px}.sharebar .btn{flex:1}
+.btn.xbtn{background:linear-gradient(#222,#000);color:#fff}
+.minishare{display:flex;gap:6px;justify-content:center;margin-top:4px}.minishare button{background:#000;color:#fff;border:1px solid #ffffff66;border-radius:999px;width:34px;height:26px;font:inherit;font-size:13px}
 .pubbtn.off{background:#4a4d55;margin-top:4px}
 .pubbtn{margin-top:6px;background:#1f6fb8;color:#fff;border:2px solid var(--line);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;font-weight:700}
 .linkbtn{background:none;border:0;color:#a9a59b;font:inherit;font-size:12px;text-decoration:underline;padding:4px}
@@ -363,10 +366,10 @@ button{font:inherit;color:inherit;cursor:pointer}
    空のままだと、鑑定は「えらぶ方式」になります。
    ============================================================ */
 const KANTEI_ENDPOINT='https://saikyo-kantei.getup117.workers.dev';
-const BUILD_ID='20261105070038';
+const BUILD_ID='20261105070652';
 /* 公開サイトでは、新しい版が出ていたら自動で読み込み直す（スマホのブラウザが古いページを覚えていることがあるため） */
 (function(){if(BUILD_ID==='dev'||!/^https?:$/.test(location.protocol))return;
-  fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==BUILD_ID&&new URLSearchParams(location.search).get('v')!==v)location.replace(location.pathname+'?v='+encodeURIComponent(v))}).catch(()=>{})})();
+  fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==BUILD_ID&&new URLSearchParams(location.search).get('v')!==v){const q=new URLSearchParams(location.search);q.set('v',v);location.replace(location.pathname+'?'+q.toString())}}).catch(()=>{})})();
 /* みんなの闘技場（GPT版のサイトでだけ使える） */
 const ARENA=KANTEI_ENDPOINT?KANTEI_ENDPOINT.replace(/\/+$/,'')+'/arena':'';
 /* ========= assets ========= */
@@ -863,8 +866,8 @@ function exportChars(){
 }
 function arenaHTML(c){if(!ARENA||c.builtin||c.online)return '';const oid=uploaded()[c.id];
   if(!oid)return `<button class="pubbtn" data-pub="${c.id}">🌐 みんなに公開</button>`;
-  const o=S.online.find(x=>x.oid===oid);if(!o)return `<div class="arena muted">🌐 公開中</div><button class="cidbtn" data-cid="${oid}">ID ${oid}</button><button class="pubbtn off" data-unpub="${c.id}">公開をやめる</button>`;
-  const rank=arenaRank().indexOf(o)+1;return `<div class="arena">🌐 みんなの戦績 <b>${o.w}勝</b> ${o.l}敗${rank?`<br>ランキング ${rank}位`:''}</div><button class="cidbtn" data-cid="${oid}">ID ${oid}</button><button class="pubbtn off" data-unpub="${c.id}">公開をやめる</button>`}
+  const o=S.online.find(x=>x.oid===oid);if(!o)return `<div class="arena muted">🌐 公開中</div><button class="cidbtn" data-cid="${oid}">ID ${oid}</button><div class="minishare"><button data-sx="${oid}">𝕏</button><button data-su="${oid}">🔗</button></div><button class="pubbtn off" data-unpub="${c.id}">公開をやめる</button>`;
+  const rank=arenaRank().indexOf(o)+1;return `<div class="arena">🌐 みんなの戦績 <b>${o.w}勝</b> ${o.l}敗${rank?`<br>ランキング ${rank}位`:''}</div><button class="cidbtn" data-cid="${oid}">ID ${oid}</button><div class="minishare"><button data-sx="${oid}">𝕏</button><button data-su="${oid}">🔗</button></div><button class="pubbtn off" data-unpub="${c.id}">公開をやめる</button>`}
 function publishChar(c,after){
   if(uploaded()[c.id]){toast('もう公開している');return}
   const m=document.createElement('div');m.className='modal';
@@ -894,13 +897,20 @@ function publishChar(c,after){
 }
 async function shrinkForArena(u){if(u.length<=1300000)return u;
   try{const im=await loadImage(u);for(const mx of [360,300,240]){const k=Math.min(1,mx/Math.max(im.width,im.height));const c=canvasOf(Math.round(im.width*k),Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);const v=exportImg(c);if(v.length<=1300000)return v}}catch(e){}return u}
+const SITE_URL='https://saikyo-royale.getup117.workers.dev/';
+function shareUrl(oid){return SITE_URL+'?c='+encodeURIComponent(oid)}
+function shareText(c){return `ぼくのかんがえた最強キャラ「${c.name}」${c.alias?'（'+c.alias+'）':''}を闘技場に解き放った。\n戦えるもんなら戦ってみろ。\n#サイキョウロワイヤル`}
+function shareHTML(oid){return `<div class="sharebar"><button class="btn small xbtn" data-sx="${oid}">𝕏 でシェア</button><button class="btn small gray" data-su="${oid}">🔗 URLをコピー</button></div>`}
+function bindShare(root){$$('[data-sx]',root).forEach(b=>b.onclick=()=>{const c=findOid(b.dataset.sx);const u='https://x.com/intent/post?text='+encodeURIComponent(shareText(c||{name:'？'}))+'&url='+encodeURIComponent(shareUrl(b.dataset.sx));window.open(u,'_blank','noopener')});
+  $$('[data-su]',root).forEach(b=>b.onclick=()=>{const u=shareUrl(b.dataset.su);(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('URLをコピーした')).catch(()=>toast(u,3500))})}
+function findOid(oid){const lid=Object.keys(uploaded()).find(k=>uploaded()[k]===oid);return S.chars.find(x=>x.id===lid)||S.online.find(x=>x.oid===oid)||S.chars.find(x=>x.oid===oid)}
 function copyId(id){const t=`サイキョウ・ロワイヤルのキャラID：${id}`;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('IDをコピーした。友だちに送ろう')).catch(()=>toast('ID：'+id,3000))}
 function releaseAnim(c,after){const oid=uploaded()[c.id];
   const d=screen(`<div class="spacer"></div><div class="release"><div class="ring"></div><img src="${c.img}" alt=""></div>
     <div class="relt">解き放たれた！</div><div class="muted" style="text-align:center;line-height:1.7">「${esc(c.name)}」が、みんなの闘技場に旅立った。<br>どこかで誰かと戦うたびに、戦績がキャラ一覧に届く。</div>
-    ${oid?`<button class="cidbtn big" data-cid="${oid}">キャラID ${oid}　📋コピー</button><div class="muted" style="text-align:center;font-size:12px">IDを教えると、友だちが「キャラを探す」ですぐ仲間にできる</div>`:''}
+    ${oid?`${shareHTML(oid)}<button class="cidbtn big" data-cid="${oid}">キャラID ${oid}　📋コピー</button><div class="muted" style="text-align:center;font-size:12px">IDを教えると、友だちが「キャラを探す」ですぐ仲間にできる</div>`:''}
     <div class="spacer"></div><button class="btn orange" data-ok>OK</button>`,'dim');
-  $('[data-ok]',d).onclick=()=>after();$$('[data-cid]',d).forEach(b=>b.onclick=()=>copyId(b.dataset.cid))}
+  $('[data-ok]',d).onclick=()=>after();$$('[data-cid]',d).forEach(b=>b.onclick=()=>copyId(b.dataset.cid));bindShare(d)}
 function reportChar(c){if(!c||!c.oid)return;
   confirmModal(`「${c.name}」を通報する？（ふさわしくない絵や文字のとき）`,'通報',()=>{arenaReq('/report',{id:c.oid,key:ownerKey()}).then(()=>toast('通報した。ありがとう')).catch(()=>toast('いまは送れなかった'))})}
 function thumbs(root){$$('[data-thumb]',root).forEach(async im=>{const c=S.online.find(x=>x.oid===im.dataset.thumb)||S.chars.find(x=>x.oid===im.dataset.thumb);if(!c)return;try{im.src=await onlineImg(c)}catch(e){}})}
@@ -949,6 +959,16 @@ async function showSearch(q=''){
       try{await onlineImg(c);if(!S.chars.some(x=>x.oid===c.oid)){unlockOnline(c);const at=S.chars.findIndex(x=>!x.builtin);S.chars.splice(at<0?S.chars.length:at,0,c)}toast(`「${c.name}」が仲間になった`);run()}
       catch(e){b.disabled=false;b.textContent='仲間にする';toast('いまは呼べなかった')}})};
   $('[data-go]',d2).onclick=run;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();inp.blur();run()}});inp.addEventListener('input',()=>{clearTimeout(inp._t);inp._t=setTimeout(run,250)});run()}
+async function showChallenge(c){
+  const d=screen(`<div class="spacer"></div><div class="muted" style="text-align:center">挑戦状が届いた</div><div class="spot" style="min-height:200px;flex:none;width:100%"><img class="win" data-cimg alt=""></div>
+    <div class="winname p2">${esc(c.name)}</div>${c.alias?`<div style="text-align:center;color:#f2c46b">${esc(c.alias)}</div>`:''}
+    <div class="muted" style="text-align:center">${esc(c.author||'だれか')}さん作・${esc(c.style||'')}・${c.w}勝${c.l}敗</div>${starsHTML(statsOf(c))}
+    <div class="spacer"></div><button class="btn orange" data-fight>⚔ このキャラと戦う</button>
+    <div class="row">${S.chars.some(x=>x.oid===c.oid)?'<button class="btn gray small" disabled>仲間になっている</button>':'<button class="btn blue small" data-join>仲間にする</button>'}<button class="btn gray small" data-home>トップへ</button></div>`,'dim');
+  $('[data-home]',d).onclick=()=>{history.replaceState(null,'',location.pathname);showHome()};
+  try{$('[data-cimg]',d).src=await onlineImg(c)}catch(e){}
+  $('[data-fight]',d).onclick=()=>{history.replaceState(null,'',location.pathname);S.mode='cpu';S.vsOnline=true;S.pick=[null,null];S.challenge=c;showSelect(0)};
+  {const j=$('[data-join]',d);if(j)j.onclick=async()=>{try{await onlineImg(c);if(!S.chars.some(x=>x.oid===c.oid)){unlockOnline(c);const at=S.chars.findIndex(x=>!x.builtin);S.chars.splice(at<0?S.chars.length:at,0,c)}toast(`「${c.name}」が仲間になった`);showChallenge(c)}catch(e){toast('いまは呼べなかった')}}}}
 function showZukan(){
   const d=screen(hdr('キャラ一覧')+`<div class="grid">${S.chars.map(c=>`<div class="ccard">${c.hidden?'<span class="hidbadge">隠れキャラ</span>':''}${c.online?`<span class="hidbadge onl">🌐 ${esc(c.author||'だれか')}さん作</span>`:''}<div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${esc(statsOf(c).n)}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${recHTML(c.id)}${arenaHTML(c)}${`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
     <button class="ccard newcard" data-new><b>＋</b>キャラをつくる</button></div>
@@ -959,7 +979,7 @@ function showZukan(){
   $('[data-new]',d).onclick=()=>showCreate();
   {const ex=$('[data-export]',d);if(ex)ex.onclick=()=>exportChars()}
   {const sb=$('[data-search]',d);if(sb)sb.onclick=()=>showSearch()}
-  $$('[data-cid]',d).forEach(b=>b.onclick=()=>copyId(b.dataset.cid));
+  $$('[data-cid]',d).forEach(b=>b.onclick=()=>copyId(b.dataset.cid));bindShare(d);
   $$('[data-pub]',d).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.id===b.dataset.pub);if(c)publishChar(c,()=>showZukan())});
   $$('[data-unpub]',d).forEach(b=>b.onclick=()=>{const c=S.chars.find(x=>x.id===b.dataset.unpub);const oid=c&&uploaded()[c.id];if(!oid)return;
     confirmModal(`「${c.name}」の公開をやめる？（みんなの闘技場から消える。自分のキャラ一覧には残る）`,'公開をやめる',()=>{
@@ -1000,7 +1020,7 @@ function showMode(){
   $('[data-tut]',d).onclick=()=>{S.preset=null;startTutorial(showMode)};
   {const v=$('[data-vson]',d);if(v)v.onclick=()=>{go('cpu');S.vsOnline=true}}
 }
-function afterP1(){if(S.mode==='cpu'&&S.vsOnline)return showOnlinePick();if(S.mode==='cpu'){S.cpuPick=randomCpu(S.pick[0]);S.pick[1]=S.cpuPick.id;startMatch()}else showSelect(1)}
+function afterP1(){if(S.mode==='cpu'&&S.vsOnline&&S.challenge){const c=S.challenge;S.challenge=null;S.cpuPick=c;S.pick[1]=c.id;return startMatch()}if(S.mode==='cpu'&&S.vsOnline)return showOnlinePick();if(S.mode==='cpu'){S.cpuPick=randomCpu(S.pick[0]);S.pick[1]=S.cpuPick.id;startMatch()}else showSelect(1)}
 function showSelect(side){
   const who=side===0?'1P':(S.mode==='cpu'?'CPU':'2P');
   const d=screen(hdr(`${who}のキャラを選ぶ`)+`
@@ -1505,15 +1525,15 @@ async function kanteiAnim(C){
 
 function showCreated(ch,onDone){
   const st=statsOf(ch);
-  const d=screen(hdr('召喚完了',false)+`<div class="spacer"></div><div class="kantei"><div class="spot" style="min-height:200px;flex:none;width:100%"><img class="win" src="${ch.img}" alt=""></div>
+  const d=screen(hdr('召喚完了',false)+`<div class="spacer"></div><div class="kantei"><div class="spot" style="min-height:${ARENA&&uploaded()[ch.id]?165:200}px;flex:none;width:100%"><img class="win" src="${ch.img}" alt=""></div>
     <div style="font-size:22px">${esc(ch.name)}</div>${ch.alias?`<div style="color:#f2c46b">${esc(ch.alias)}</div>`:''}<div class="muted">${esc(st.n)}・HP${hpOf(st)}・${handsText(handsOf(ch))}</div></div>
     <div class="muted" style="text-align:center">キャラ一覧に登録した。このままバトルする？</div><div class="spacer"></div>
-    ${ARENA?(uploaded()[ch.id]?'<button class="btn gray pubdone" disabled>✅ 公開済み（みんなの闘技場にいる）</button>':'<button class="btn orange" data-pub>🌐 みんなの闘技場に解き放つ</button>'):''}
+    ${ARENA?(uploaded()[ch.id]?'<div class="pubdone">✅ 公開済み（みんなの闘技場にいる）</div>'+shareHTML(uploaded()[ch.id]):'<button class="btn orange" data-pub>🌐 みんなの闘技場に解き放つ</button>'):''}
     <button class="btn blue" data-fight>⚔ このキャラでバトルする</button>
     <div class="row"><button class="btn gray small" data-more>✎ もう1体つくる</button><button class="btn gray small" data-home>トップに戻る</button></div>`,'dim');
   $('[data-fight]',d).onclick=()=>{if(onDone&&onDone.pickSide!=null){const sd=onDone.pickSide;S.pick[sd]=ch.id;if(sd===0)afterP1();else startMatch()}else{S.preset=ch.id;showMode()}};
   $('[data-more]',d).onclick=()=>showCreate(onDone);
-  {const pb=$('[data-pub]',d);if(pb)pb.onclick=()=>publishChar(ch,()=>showCreated(ch,onDone))}
+  {const pb=$('[data-pub]',d);if(pb)pb.onclick=()=>publishChar(ch,()=>showCreated(ch,onDone))}bindShare(d);
   $('[data-home]',d).onclick=()=>showHome();
 }
 /* ========= boot ========= */
@@ -1525,7 +1545,9 @@ function showCreated(ch,onDone){
   S.chars=S.chars.concat(onlineUnlocked().filter(c=>c&&c.img&&validStats(c.stats)).map(c=>Object.assign(c,{online:true,builtin:true,fx:detectFx(c.special||'')})));
   S.chars=S.chars.concat(loadUserChars().filter(c=>c&&c.img&&(TYPES[c.type]||validStats(c.stats))));
   {const rm=lsGet(REMOVED_KEY,[]);S.chars=S.chars.filter(c=>!rm.includes(c.id))}
-  showHome();loadOnline();
+  {const cq=new URLSearchParams(location.search).get('c');
+    if(ARENA&&cq&&/^[a-z0-9]{6,32}$/.test(cq)){showHome();loadOnline().then(()=>{const c=S.chars.find(x=>x.oid===cq)||S.online.find(x=>x.oid===cq);if(c&&!ownOids().has(cq))showChallenge(c);else if(c)showZukan();else toast('そのキャラは見つからなかった（公開をやめたのかも）',2600)})}
+    else{showHome();loadOnline()}}
 })();
 window.__game={setMikiri:v=>MIKIRI_DMG=v,S,TYPES,normStats,normHands,statsOf,cleanKantei,typeFromCats,resolveTurn,detectFx,fxCandidates,typeFromFeatures,newFighter,cpuHands,setSpeed:v=>SPEED=v};
 </script>
