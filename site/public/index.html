@@ -654,24 +654,24 @@ function showHome(){
     <div class="vs-stage"><img class="ch" src="${a.img}" alt=""><div class="vs-text">VS</div><img class="ch" src="${b.img}" alt=""></div>
     <button class="btn orange" data-create>✎ キャラをつくる</button>
     <button class="btn blue" data-battle>⚔ バトルする</button>
-    <div class="home-links"><button data-zukan>戦士名鑑</button><button data-howto>決闘の掟</button></div>`);
+    <div class="home-links"><button data-zukan>キャラ一覧</button><button data-howto>あそび方</button></div>`);
   $('[data-create]',d).onclick=()=>showCreate();
   $('[data-battle]',d).onclick=()=>showMode();
   $('[data-zukan]',d).onclick=()=>showZukan();
   $('[data-howto]',d).onclick=()=>showHowto();
 }
 function showHowto(){
-  const d=screen(hdr('決闘の掟')+`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
-    <p style="margin-top:0"><b>Ⅰ　召喚</b><br>紙に描いた戦士を撮影し、名と必殺技を刻め。その姿を読み解き、AIが能力（攻撃・防御・体力・すばやさに合計120）と拳の相性を定める。</p>
-    <p><b>Ⅱ　六手を刻む</b><br>グー・チョキ・パーを六度選べ。猶予は約12秒。敵に手の内は見えない。</p>
-    <p><b>Ⅲ　必殺技</b><br>第二ターンより解放。六手のどこにでも「必殺」を仕込める。1ターンに一度きり。あらゆる手を打ち破り50ダメージ。必殺技同士は相殺する。</p>
-    <p><b>Ⅳ　見切り</b><br>速さで勝る者は、拮抗の刹那に「見切り」を放ち10ダメージを与える。速さの差10ごとに、1ターンの発動回数が1増える（最大3回）。</p>
-    <p><b>Ⅴ　拳の相性</b><br>戦士にはグー・チョキ・パーの得手不得手がある。得意な手で勝てばダメージが増し、苦手な手では減る（3つの合計は0）。相手の相性は、手を選ぶ画面に示される。読め。</p>
-    <p style="margin-bottom:0"><b>Ⅵ　決着</b><br>敵のHPを0にするか、三ターン終了時に多くのHPを残した者が勝者となる。</p></div>`,'dim');
+  const d=screen(hdr('あそび方')+`<div class="panel" style="font-weight:500;font-size:14px;line-height:1.75">
+    <p style="margin-top:0"><b>1　キャラをつくる</b><br>紙に描いたキャラを撮影して、名前と必殺技を入れる。AIが絵を見て、能力（攻撃・防御・体力・すばやさ、合計120）と、グー・チョキ・パーの相性を決める。</p>
+    <p><b>2　6回分の手を決める</b><br>1ターンに、グー・チョキ・パーを6回分まとめて選ぶ。時間は約12秒。相手には見えない。</p>
+    <p><b>3　必殺技</b><br>2ターン目から、6回のうち好きな順番に「必殺」を入れられる（1ターンに1回）。どの手にも勝って50ダメージ。必殺どうしは引き分け。</p>
+    <p><b>4　見切り</b><br>あいこのとき、すばやさが高いほうが10ダメージを与える。すばやさの差10ごとに1回、1ターン最大3回まで。</p>
+    <p><b>5　グー・チョキ・パーの相性</b><br>キャラごとに得意な手と苦手な手がある。得意な手で勝つとダメージが増え、苦手な手だと減る（3つの合計は0）。相手の相性は、手を選ぶ画面のボタンに＋／−で出る。</p>
+    <p style="margin-bottom:0"><b>6　勝ち負け</b><br>相手のHPを0にしたら勝ち。3ターン終わったら、HPが多く残っているほうの勝ち。</p></div>`,'dim');
   bindBack(d,showHome);
 }
 function showZukan(){
-  const d=screen(hdr('戦士名鑑')+`<div class="grid">${S.chars.map(c=>`<div class="ccard"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${statsOf(c).n}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${c.builtin?'':`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
+  const d=screen(hdr('キャラ一覧')+`<div class="grid">${S.chars.map(c=>`<div class="ccard"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${statsOf(c).n}${c.alias?'・'+esc(c.alias):''}</div><div class="muted">${esc(c.special)}</div>${c.bio?`<div class="muted" style="font-size:11px">${esc(c.bio)}</div>`:''}${c.builtin?'':`<button class="del" data-del="${c.id}">✕</button>`}</div>`).join('')}
     <button class="ccard newcard" data-new><b>＋</b>キャラをつくる</button></div>`,'dim');
   bindBack(d,showHome);
   $('[data-new]',d).onclick=()=>showCreate();
@@ -1191,7 +1191,7 @@ function showCreated(ch,onDone){
   const st=statsOf(ch);
   const d=screen(hdr('召喚完了',false)+`<div class="spacer"></div><div class="kantei"><div class="spot" style="min-height:200px;flex:none;width:100%"><img class="win" src="${ch.img}" alt=""></div>
     <div style="font-size:22px">${esc(ch.name)}</div>${ch.alias?`<div style="color:#f2c46b">${esc(ch.alias)}</div>`:''}<div class="muted">${esc(st.n)}・HP${hpOf(st)}・${handsText(handsOf(ch))}</div></div>
-    <div class="muted" style="text-align:center">戦士名鑑に登録した。このままバトルする？</div><div class="spacer"></div>
+    <div class="muted" style="text-align:center">キャラ一覧に登録した。このままバトルする？</div><div class="spacer"></div>
     <button class="btn blue" data-fight>⚔ このキャラでバトルする</button>
     <div class="row"><button class="btn gray small" data-more>✎ もう1体つくる</button><button class="btn gray small" data-home>トップに戻る</button></div>`,'dim');
   $('[data-fight]',d).onclick=()=>{if(onDone&&onDone.pickSide!=null){const sd=onDone.pickSide;S.pick[sd]=ch.id;if(sd===0)showSelect(1);else startMatch()}else{S.preset=ch.id;showMode()}};
