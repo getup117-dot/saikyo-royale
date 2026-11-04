@@ -58,6 +58,8 @@ export default {
       '5. style：このキャラの戦い方を表す「〇〇型」を8文字以内で（例：「一撃必殺型」「鉄壁要塞型」）\n' +
       '6. alias：厨二病っぽい二つ名を12文字以内で（例：「漆黒の翼竜」「終焉を告げる者」）\n' +
       '7. comment：このキャラの力をたたえる厨二病っぽい一言を25文字以内で（例：「その翼、夜をも裂くか。」）\n' +
+      '8. win_lines：バトルに勝ったとき、このキャラ自身が言うセリフを3つ。キャラの口調・設定に合わせて、厨二病っぽく、各30文字以内。3つは違う雰囲気にする\n' +
+      '9. lose_lines：バトルに負けたとき、このキャラ自身が言うセリフを3つ。悔しさ・誇り・再戦の誓いなど、各30文字以内\n' +
       'ルール：\n' +
       '- 絵の上手さ・細かさ・きれいさは一切評価しない。らくがきでも、見えたものからかっこよく読み解く\n' +
       '- 特徴の名前は厨二病っぽくかっこいい言葉で10文字以内（例：「獄炎のたてがみ」「漆黒の双翼」）\n' +
@@ -110,12 +112,14 @@ export default {
               style: { type: 'string' },
               alias: { type: 'string' },
               comment: { type: 'string' },
+              win_lines: { type: 'array', items: { type: 'string' }, maxItems: 3 },
+              lose_lines: { type: 'array', items: { type: 'string' }, maxItems: 3 },
             },
-            required: ['features', 'stats', 'hands', 'hand_note', 'style', 'alias', 'comment'],
+            required: ['features', 'stats', 'hands', 'hand_note', 'style', 'alias', 'comment', 'win_lines', 'lose_lines'],
           },
         },
       },
-      max_output_tokens: 1000,
+      max_output_tokens: 1400,
     };
 
     let ai;
@@ -161,6 +165,8 @@ export default {
       features, stats, hands,
       hand_note: clip(result.hand_note, 24), style: clip(result.style, 10),
       alias: clip(result.alias, 14), comment: clip(result.comment, 40),
+      win_lines: (Array.isArray(result.win_lines) ? result.win_lines : []).slice(0, 3).map((x) => clip(x, 36)),
+      lose_lines: (Array.isArray(result.lose_lines) ? result.lose_lines : []).slice(0, 3).map((x) => clip(x, 36)),
     });
   },
 };
