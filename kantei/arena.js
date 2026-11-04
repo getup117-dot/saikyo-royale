@@ -26,6 +26,7 @@ async function db(env) {
         'CREATE TABLE IF NOT EXISTS chars (id TEXT PRIMARY KEY, owner TEXT, author TEXT, data TEXT, img TEXT, w INTEGER DEFAULT 0, l INTEGER DEFAULT 0, d INTEGER DEFAULT 0, reports INTEGER DEFAULT 0, hidden INTEGER DEFAULT 0, created INTEGER)'
       ),
       env.DB.prepare('CREATE TABLE IF NOT EXISTS reports (cid TEXT, who TEXT, PRIMARY KEY (cid, who))'),
+      env.DB.prepare('CREATE TABLE IF NOT EXISTS streaks (owner TEXT PRIMARY KEY, name TEXT, best INTEGER, ch TEXT, updated INTEGER)'),
     ]);
     ready = true;
   }
@@ -119,6 +120,11 @@ export async function handleArena(request, env, reply, path) {
     return reply({ chars });
   }
 
+  if (request.method === 'GET' && path === '/arena/streaks') {
+    const { results } = await D.prepare('SELECT name, best, ch, updated, substr(owner, 1, 10) AS who FROM streaks ORDER BY best DESC, updated ASC LIMIT 50').all();
+    return reply({ streaks: results || [] });
+  }
+
   const m = path.match(/^\/arena\/img\/([a-z0-9]{6,32})$/);
   if (request.method === 'GET' && m) {
     const row = await D.prepare('SELECT img FROM chars WHERE id = ? AND hidden = 0 AND reports < ?').bind(m[1], REPORT_LIMIT).first();
@@ -164,6 +170,21 @@ export async function handleArena(request, env, reply, path) {
     }
     if (stmts.length) await D.batch(stmts);
     return reply({ ok: true });
+  }
+
+  if (path === '/arena/streak') {
+    const key = String(body.key || '');
+    if (!/^[a-f0-9]{32}$/.test(key)) return reply({ error: 'bad key' }, 400);
+    const best = Math.floor(+body.best);
+    if (!Number.isFinite(best) || best < 1 || best > 9999) return reply({ error: 'bad best' }, 400);
+    const name = clip(body.name, 12);
+    const ch = clip(body.ch, 12);
+    if (personalInfo(name + ' ' + ch)) return reply({ error: 'personal', reason: 'personal' }, 422);
+    const owner = await sha(key);
+    await D.prepare(
+      'INSERT INTO streaks (owner, name, best, ch, updated) VALUES (?, ?, ?, ?, ?) ON CONFLICT(owner) DO UPDATE SET name = excluded.name, ch = CASE WHEN excluded.best > streaks.best THEN excluded.ch ELSE streaks.ch END, updated = CASE WHEN excluded.best > streaks.best THEN excluded.updated ELSE streaks.updated END, best = MAX(streaks.best, excluded.best)'
+    ).bind(owner, name, best, ch, Date.now()).run();
+    return reply({ ok: true, who: owner.slice(0, 10) });
   }
 
   if (path === '/arena/report') {

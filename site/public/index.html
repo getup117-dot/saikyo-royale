@@ -278,6 +278,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 @keyframes relring{0%{transform:scale(.2);opacity:0}50%{opacity:1}100%{transform:scale(1.15);opacity:.8}}
 .relt{text-align:center;font-family:var(--head);font-size:34px;color:#fff;paint-order:stroke;-webkit-text-stroke:5px #1f6fb8;text-shadow:0 3px 0 #000}
 .rank{display:flex;flex-direction:column;gap:6px}
+.rtabs{display:flex;gap:6px}.rtabs button{flex:1;padding:9px;border-radius:999px;border:2px solid var(--line);background:#2b2e36;color:#fff;font:inherit;font-weight:700}.rtabs button.on{background:var(--amber);color:#201000}
+.rname-set{display:flex;gap:6px}.rname-set input{flex:1;min-width:0;border:2px solid var(--line);border-radius:10px;background:#f6f3ec;color:#111;font:inherit;font-size:15px;padding:8px 10px}.rname-set .btn{width:auto;padding:8px 12px;font-size:13px}
 .rrow{display:flex;align-items:center;gap:8px;background:#2b2e36;border:2px solid #ffffff33;border-radius:12px;padding:6px 10px}
 .rrow.mine{border-color:#f2c46b;background:#3a2c10}
 .rrow .rn{font-family:var(--head);font-size:20px;width:30px;text-align:center;color:#f2c46b}
@@ -563,7 +565,12 @@ async function arenaReq(path,body,ms=15000){const ac=new AbortController();const
 function onlineChar(o){return {id:'o_'+o.id,oid:o.id,online:true,builtin:true,author:o.author||'',w:o.w|0,l:o.l|0,d:o.d|0,name:o.name,special:o.special,desc:o.desc,bio:o.bio,alias:o.alias,style:o.style,
   comment:o.comment,handNote:o.handNote,feats:o.feats||[],features:(o.feats||[]).map(f=>f.name),stats:o.stats,hands:o.hands,winLines:o.winLines||[],type:'balance',fx:detectFx(o.special||'')}}
 S.online=[];S.onlineOk=false;
-async function loadOnline(){if(!ARENA)return;try{const r=await arenaReq('/list');S.online=(r.chars||[]).map(onlineChar);S.onlineOk=true}catch(e){S.onlineOk=false}}
+async function loadOnline(){if(!ARENA)return;try{const r=await arenaReq('/list');S.online=(r.chars||[]).map(onlineChar);S.onlineOk=true}catch(e){S.onlineOk=false}
+  if(S.onlineOk&&bestStreak()>lsGet(SENT_KEY,0))sendStreak()}
+const SENT_KEY='saikyo_royale_streak_sent_v1';
+function sendStreak(chName){if(!ARENA)return;const best=bestStreak();if(!best)return;
+  arenaReq('/streak',{key:ownerKey(),name:lsGet(AUTHOR_KEY,''),best,ch:chName||lsGet('saikyo_royale_best_ch_v1','')}).then(()=>lsSet(SENT_KEY,best)).catch(()=>{})}
+async function myWho(){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('saikyo:'+ownerKey()));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,10)}
 const IMGC=new Map();
 async function onlineImg(c){if(c.img)return c.img;if(IMGC.has(c.oid))return c.img=IMGC.get(c.oid);const r=await arenaReq('/img/'+c.oid);IMGC.set(c.oid,r.img);return c.img=r.img}
 const onlineUnlocked=()=>lsGet(ONL_KEY,[]);
@@ -870,15 +877,27 @@ function releaseAnim(c,after){
 function reportChar(c){if(!c||!c.oid)return;
   confirmModal(`「${c.name}」を通報する？（ふさわしくない絵や文字のとき）`,'通報',()=>{arenaReq('/report',{id:c.oid,key:ownerKey()}).then(()=>toast('通報した。ありがとう')).catch(()=>toast('いまは送れなかった'))})}
 function thumbs(root){$$('[data-thumb]',root).forEach(async im=>{const c=S.online.find(x=>x.oid===im.dataset.thumb)||S.chars.find(x=>x.oid===im.dataset.thumb);if(!c)return;try{im.src=await onlineImg(c)}catch(e){}})}
-async function showRanking(){
+async function showRanking(tab='char'){
   const d=screen(hdr('ランキング')+'<div class="muted" style="text-align:center">読み込み中……</div>','dim');bindBack(d,showHome);
-  await loadOnline();if(!document.body.contains(d))return;
-  const own=ownOids();const list=arenaRank().slice(0,50);
-  const d2=screen(hdr('ランキング')+`<div class="muted" style="text-align:center;font-size:12px">みんなの闘技場に公開されたキャラの、勝利数ランキング</div>
+  let streaks=[],sOk=true,who='';
+  if(tab==='char')await loadOnline();else{try{streaks=(await arenaReq('/streaks')).streaks||[]}catch(e){sOk=false}try{who=await myWho()}catch(e){}}
+  if(!document.body.contains(d))return;
+  const tabs=`<div class="rtabs"><button data-tab="char" class="${tab==='char'?'on':''}">キャラ</button><button data-tab="streak" class="${tab==='streak'?'on':''}">連勝記録</button></div>`;
+  let body='';
+  if(tab==='char'){const own=ownOids();const list=arenaRank().slice(0,50);
+    body=`<div class="muted" style="text-align:center;font-size:12px">みんなの闘技場に公開されたキャラの、勝利数ランキング</div>
     ${S.onlineOk?'':'<div class="muted" style="text-align:center">いまは読み込めなかった</div>'}
     ${S.onlineOk&&!list.length?'<div class="muted" style="text-align:center">まだ誰も公開していない。キャラを作って一番乗りしよう</div>':''}
-    <div class="rank">${list.map((c,i)=>{const g=c.w+c.l+c.d;return `<div class="rrow ${own.has(c.oid)?'mine':''}"><b class="rn">${i+1}</b><img data-thumb="${c.oid}" alt=""><div class="rinfo"><div class="rname">${esc(c.name)}${own.has(c.oid)?'<span>あなた</span>':''}</div><div class="muted">${esc(c.author||'だれか')}さん作・${esc(c.style||'')}</div></div><div class="rscore"><b>${c.w}勝</b><small>${c.l}敗${g?`・勝率${Math.round(c.w/g*100)}%`:''}</small></div></div>`}).join('')}</div>`,'dim');
-  bindBack(d2,showHome);thumbs(d2)}
+    <div class="rank">${list.map((c,i)=>{const g=c.w+c.l+c.d;return `<div class="rrow ${own.has(c.oid)?'mine':''}"><b class="rn">${i+1}</b><img data-thumb="${c.oid}" alt=""><div class="rinfo"><div class="rname">${esc(c.name)}${own.has(c.oid)?'<span>あなた</span>':''}</div><div class="muted">${esc(c.author||'だれか')}さん作・${esc(c.style||'')}</div></div><div class="rscore"><b>${c.w}勝</b><small>${c.l}敗${g?`・勝率${Math.round(c.w/g*100)}%`:''}</small></div></div>`}).join('')}</div>`}
+  else{body=`<div class="muted" style="text-align:center;font-size:12px">CPU戦の連勝モードで、いちばん長く勝ち続けた記録</div>
+    <div class="rname-set"><input data-myname maxlength="12" placeholder="ランキングに出す名前" value="${esc(lsGet(AUTHOR_KEY,''))}"><button class="btn gray small" data-savename>名前を保存</button></div>
+    <div class="muted" style="text-align:center;font-size:12px">あなたの最高記録：${bestStreak()}連勝</div>
+    ${sOk?'':'<div class="muted" style="text-align:center">いまは読み込めなかった</div>'}
+    ${sOk&&!streaks.length?'<div class="muted" style="text-align:center">まだ記録がない。連勝モードで一番乗りしよう</div>':''}
+    <div class="rank">${streaks.map((r,i)=>`<div class="rrow ${r.who===who?'mine':''}"><b class="rn">${i+1}</b><div class="rinfo"><div class="rname">${esc(r.name||'名無しの挑戦者')}${r.who===who?'<span>あなた</span>':''}</div><div class="muted">${r.ch?esc(r.ch)+'で達成':''}</div></div><div class="rscore"><b>${r.best}連勝</b></div></div>`).join('')}</div>`}
+  const d2=screen(hdr('ランキング')+tabs+body,'dim');bindBack(d2,showHome);thumbs(d2);
+  $$('[data-tab]',d2).forEach(b=>b.onclick=()=>showRanking(b.dataset.tab));
+  {const sv=$('[data-savename]',d2);if(sv)sv.onclick=async()=>{lsSet(AUTHOR_KEY,$('[data-myname]',d2).value.trim());if(bestStreak()){try{await arenaReq('/streak',{key:ownerKey(),name:lsGet(AUTHOR_KEY,''),best:bestStreak(),ch:lsGet('saikyo_royale_best_ch_v1','')});lsSet(SENT_KEY,bestStreak())}catch(e){}}toast('名前を保存した');showRanking('streak')}}}
 function showOnlinePick(){
   const d=screen(hdr('対戦相手を選ぶ')+'<div class="muted" style="text-align:center">読み込み中……</div>','dim');bindBack(d,()=>showSelect(0));
   loadOnline().then(()=>{if(!document.body.contains(d))return;const own=ownOids();const list=arenaRank().filter(c=>!own.has(c.oid));
@@ -1230,8 +1249,8 @@ function showResult(){
   let newBest=false;
   if(!M.recorded){M.recorded=true;recordMatch(M,w,titles.slice(0,2));
     reportResults(M,w);
-    if(M.cpu&&!M.tut&&!M.vsOnline){M.prevStreak=S.streak;if(w===0){S.streak++;if(S.streak>bestStreak()){saveBest(S.streak);newBest=true}}else S.streak=0;M.newBest=newBest}}
-  const streakHTML=M.cpu&&!M.vsOnline?(w===0?`<div class="streak">🔥 ${S.streak}連勝${M.newBest?'<small>最高記録！</small>':''}<em>次はCPU Lv.${cpuLvInfo().lv}</em></div>`:(M.prevStreak?`<div class="streak lost">連勝ストップ（${M.prevStreak}連勝）<em>最高記録 ${bestStreak()}連勝</em></div>`:'')):'';
+    if(M.cpu&&!M.tut&&!M.vsOnline){M.prevStreak=S.streak;if(w===0){S.streak++;if(S.streak>bestStreak()){saveBest(S.streak);newBest=true;lsSet('saikyo_royale_best_ch_v1',M.F[0].ch.name);sendStreak(M.F[0].ch.name)}}else S.streak=0;M.newBest=newBest}}
+  const streakHTML=M.cpu&&!M.vsOnline?(w===0?`<div class="streak">🔥 ${S.streak}連勝${M.newBest?`<small>最高記録！</small>${ARENA?'<em>みんなの連勝ランキングに記録した</em>':''}`:''}<em>次はCPU Lv.${cpuLvInfo().lv}</em></div>`:(M.prevStreak?`<div class="streak lost">連勝ストップ（${M.prevStreak}連勝）<em>最高記録 ${bestStreak()}連勝</em></div>`:'')):'';
   const mk=M.stats.map(x=>x.mikiri||0);
   const d=screen(`<div class="ribbon ${w===1?'p2':w<0?'draw':''}">${w<0?'相打ち':sideTag(w,M)+' WIN!'}</div>
     <div class="spot">${w>=0?`<img class="win" src="${wf.ch.img}" alt="">`:`<img class="win" src="${A.ch.img}" alt="" style="max-width:45%"><img class="win" src="${B.img}" alt="" style="max-width:45%">`}${w>=0?`<img class="crowd" src="${AS.crowd}" alt="">`:''}</div>
