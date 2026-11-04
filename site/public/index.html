@@ -146,6 +146,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .pk{aspect-ratio:1/1.12;border-radius:14px;border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink),inset 0 -5px 0 rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;color:#1b1b1b;gap:2px;transition:transform .06s}
 .pk:active{transform:scale(.94)}
+.hpanel{padding:7px 10px;display:flex;flex-direction:column;gap:5px}
+.hrow{display:flex;align-items:center;gap:8px;font-size:12px}
+.hrow .hl{width:64px;flex-shrink:0;color:#d8d3c6}
+.hrow.opp .hl{color:#ff8a7a}
+.hrow .hc{display:flex;align-items:center;gap:4px;flex:1}
+.hrow .hc b{font-family:var(--head);font-weight:400;font-size:14px}
+.hrow b.up{color:#ff7a5c}.hrow b.dn{color:#8fb4ef}.hrow b.zero{color:#8a8f99}
 .hb{position:absolute;top:4px;right:5px;font-size:11px;padding:1px 5px;border-radius:6px;border:1px solid #000;color:#fff}
 .hb.up{background:#d8392e}.hb.dn{background:#4a4e57}
 .pk img{width:68%}
@@ -741,7 +748,8 @@ function showInput(side,done){
   const M=S.match;const me=M.F[side],op=M.F[1-side];
   const limit=inputTime(me.t.s,op.t.s);const canSpecial=M.turn>=2&&!me.specialUsed;
   const prev=M.history.length?M.history[M.history.length-1]:null;
-  const d=screen(QUIT_BAR+hpBarHTML(M)+
+  const handRow=(f,label,cls)=>`<div class="hrow ${cls}"><span class="hl">${label}</span>${['R','S','P'].map(h=>{const v=f.hands[h];return `<span class="hc">${handMini(h)}<b class="${v>0?'up':v<0?'dn':'zero'}">${v>0?'+'+v:v<0?'−'+Math.abs(v):'±0'}</b></span>`}).join('')}</div>`;
+  const d=screen(QUIT_BAR+hpBarHTML(M)+`<div class="panel hpanel">${handRow(op,`${sideTag(1-side,M)}の相性`,'opp')}${handRow(me,'自分の相性','me')}<div class="muted" style="font-size:10px;margin-top:-1px">数字は、その手で勝ったときのダメージの増減</div></div>`+
     (prev?`<div class="panel prev"><div class="pr"><span>前の${sideTag(side,M)}</span>${prev[side].map(h=>handMini(h)).join('')}</div><div class="pr"><span>前の${sideTag(1-side,M)}</span>${prev[1-side].map(h=>handMini(h)).join('')}</div></div>`:'')+
     `<div class="inhead"><h3>${sideTag(side,M)}の手を6つ選ぶ</h3><div class="timer" data-timer><span data-t>${Math.ceil(limit)}</span></div></div>
     <div class="slots" data-slots>${[0,1,2,3,4,5].map(i=>`<div class="slot" data-slot="${i}">${i+1}</div>`).join('')}</div>
