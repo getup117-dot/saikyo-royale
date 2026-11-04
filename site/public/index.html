@@ -357,6 +357,10 @@ button{font:inherit;color:inherit;cursor:pointer}
    空のままだと、鑑定は「えらぶ方式」になります。
    ============================================================ */
 const KANTEI_ENDPOINT='https://saikyo-kantei.getup117.workers.dev';
+const BUILD_ID='20261105063804';
+/* 公開サイトでは、新しい版が出ていたら自動で読み込み直す（スマホのブラウザが古いページを覚えていることがあるため） */
+(function(){if(BUILD_ID==='dev'||!/^https?:$/.test(location.protocol))return;
+  fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==BUILD_ID&&new URLSearchParams(location.search).get('v')!==v)location.replace(location.pathname+'?v='+encodeURIComponent(v))}).catch(()=>{})})();
 /* みんなの闘技場（GPT版のサイトでだけ使える） */
 const ARENA=KANTEI_ENDPOINT?KANTEI_ENDPOINT.replace(/\/+$/,'')+'/arena':'';
 /* ========= assets ========= */
