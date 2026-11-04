@@ -278,6 +278,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 @keyframes relring{0%{transform:scale(.2);opacity:0}50%{opacity:1}100%{transform:scale(1.15);opacity:.8}}
 .relt{text-align:center;font-family:var(--head);font-size:34px;color:#fff;paint-order:stroke;-webkit-text-stroke:5px #1f6fb8;text-shadow:0 3px 0 #000}
 .rank{display:flex;flex-direction:column;gap:6px}
+.modal .panel{max-height:100%;overflow-y:auto}
+.terms{text-align:left;background:#0005;border:1px solid #ffffff33;border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.55}.terms b{font-size:13px}.terms ul{margin:4px 0 6px;padding-left:18px}.terms li{margin:2px 0}
+.agree{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}.agree input{width:22px;height:22px;accent-color:var(--amber)}
 .rtabs{display:flex;gap:6px}.rtabs button{flex:1;padding:9px;border-radius:999px;border:2px solid var(--line);background:#2b2e36;color:#fff;font:inherit;font-weight:700}.rtabs button.on{background:var(--amber);color:#201000}
 .rname-set{display:flex;gap:6px}.rname-set input{flex:1;min-width:0;border:2px solid var(--line);border-radius:10px;background:#f6f3ec;color:#111;font:inherit;font-size:15px;padding:8px 10px}.rname-set .btn{width:auto;padding:8px 12px;font-size:13px}
 .rrow{display:flex;align-items:center;gap:8px;background:#2b2e36;border:2px solid #ffffff33;border-radius:12px;padding:6px 10px}
@@ -856,13 +859,23 @@ function publishChar(c,after){
   m.innerHTML=`<div class="panel"><div style="font-size:18px">「${esc(c.name)}」を<br>みんなの闘技場に解き放つ</div>
     <div class="muted" style="font-size:13px;line-height:1.6">ほかの人のCPU戦に、対戦相手として出てくる。<br>戦った人のキャラ一覧にも加わる。<br>絵と文字はAIがチェックしてから公開される。</div>
     <label class="fld opt" style="text-align:left"><b>作者名<small>書かなくてもOK・本名はやめよう</small></b><input data-au maxlength="12" placeholder="例：しょうた" value="${esc(lsGet(AUTHOR_KEY,''))}"></label>
-    <button class="btn orange" data-go>🌐 解き放つ</button><button class="btn gray small" data-x>やめる</button></div>`;
+    <div class="terms"><b>公開する前に確認</b><ul>
+      <li>自分で描いた絵である（または、描いた人の許可をもらっている）</li>
+      <li>アニメ・ゲーム・マンガなど、ほかの人の作品やキャラクターを写したものではない</li>
+      <li>本名・顔写真・住所・学校名など、個人がわかる情報を入れていない</li>
+      <li>公開したキャラは、ほかの人の対戦・キャラ一覧・ランキングに表示される</li>
+      <li>ふさわしくないキャラは、通報や管理者の判断で予告なく非公開になることがある</li>
+      <li>取り下げたいときは、キャラ一覧でそのキャラを削除する</li>
+      <li>中学生以下の人は、おうちの人に確認してから公開する</li></ul>
+      <label class="agree"><input type="checkbox" data-agree> 上のすべてに同意する</label></div>
+    <button class="btn orange" data-go disabled>🌐 解き放つ</button><button class="btn gray small" data-x>やめる</button></div>`;
   app.appendChild(m);$('[data-x]',m).onclick=()=>m.remove();
-  $('[data-go]',m).onclick=async()=>{const b=$('[data-go]',m);b.disabled=true;b.textContent='🔍 AIがチェック中……';
+  $('[data-agree]',m).onchange=e=>{$('[data-go]',m).disabled=!e.target.checked};
+  $('[data-go]',m).onclick=async()=>{if(!$('[data-agree]',m).checked)return;const b=$('[data-go]',m);b.disabled=true;b.textContent='🔍 AIがチェック中……';
     const author=$('[data-au]',m).value.trim();lsSet(AUTHOR_KEY,author);
     const ch={name:c.name,special:c.special,desc:c.desc,bio:c.bio,alias:c.alias,style:statsOf(c).n,comment:c.comment,handNote:c.handNote,feats:c.feats||[],stats:statsOf(c),hands:handsOf(c),winLines:c.winLines||[]};
     ch.stats={a:ch.stats.a,d:ch.stats.d,h:ch.stats.h,s:ch.stats.s};
-    try{const img=await shrinkForArena(c.img);const r=await arenaReq('/upload',{key:ownerKey(),author,img,char:ch},30000);const u=uploaded();u[c.id]=r.id;lsSet(UPL_KEY,u);m.remove();
+    try{const img=await shrinkForArena(c.img);const r=await arenaReq('/upload',{key:ownerKey(),author,img,char:ch,consent:'v1'},30000);const u=uploaded();u[c.id]=r.id;lsSet(UPL_KEY,u);m.remove();
       loadOnline();releaseAnim(c,after)}
     catch(e){const why=e&&e.info&&e.info.reason;b.disabled=false;b.textContent='🌐 解き放つ';
       toast(why==='flagged'?'AIのチェックで公開できなかった。絵や文字を見直してね':why==='personal'?'電話番号・メール・URLは入れられない':why==='limit'?'公開できるのは1人30体まで':`いまは公開できなかった（${e&&e.status?e.status+(why?'・'+why:''):'通信エラー'}）`,3500)}};

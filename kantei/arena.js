@@ -143,6 +143,7 @@ export async function handleArena(request, env, reply, path) {
     if (!/^[a-f0-9]{32}$/.test(key)) return reply({ error: 'bad key' }, 400);
     const img = String(body.img || '');
     if (img.length > MAX_IMG || !/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(img)) return reply({ error: 'bad image' }, 400);
+    if (body.consent !== 'v1') return reply({ error: 'consent required', reason: 'consent' }, 400);
     const ch = cleanChar(body.char);
     if (!ch) return reply({ error: 'bad char' }, 400);
     const author = clip(body.author, 12);
