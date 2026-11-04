@@ -118,9 +118,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .bar i{display:block;height:100%;background:linear-gradient(#6fe06a,#2fa82c);transition:width .35s ease}
 .hpside.r .bar i{margin-left:auto}
 .bar i.mid{background:linear-gradient(#ffd75a,#e0a31a)} .bar i.low{background:linear-gradient(#ff6a5a,#c62a1d)}
-.markers{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;min-height:16px}
+.markers{display:flex;gap:2px;margin-top:3px;flex-wrap:nowrap;min-height:14px;overflow:hidden}
 .hpside.r .markers{justify-content:flex-end}
-.mk{font-size:10px;line-height:1;padding:2px 4px;border-radius:4px;border:1px solid #000;white-space:nowrap;transition:opacity .3s,transform .3s}
+.mk{font-size:9px;line-height:1;padding:2px 3px;flex-shrink:0;border-radius:4px;border:1px solid #000;white-space:nowrap;transition:opacity .3s,transform .3s}
 .mk.atkup{background:#f2a81d;color:#201000} .mk.atkdn{background:#5b5f69} .mk.defup{background:#3d7be0} .mk.defdn{background:#8a3a34}
 .mk.used{opacity:.15;transform:scale(.85)}
 .turnlbl{font-family:var(--head);font-size:13px;text-align:center;line-height:1.1;color:var(--amber)}
@@ -138,19 +138,19 @@ button{font:inherit;color:inherit;cursor:pointer}
 .mini.R{background:var(--rock)} .mini.S{background:var(--scissors)} .mini.P{background:var(--paper)} .mini.X{background:var(--special);font-family:var(--head);font-size:13px}
 .inhead{display:flex;align-items:center;gap:10px}
 .inhead h3{flex:1;margin:0;font-family:var(--head);font-weight:400;font-size:20px;background:#2b2e36;border:3px solid var(--line);box-shadow:0 0 0 2px var(--ink);border-radius:10px 30px 30px 10px;padding:6px 12px}
-.timer{width:62px;height:62px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:28px;
+.timer{width:54px;height:54px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:28px;
   background:conic-gradient(var(--amber) var(--p,100%),#2b2e36 0);box-shadow:0 0 0 3px var(--ink)}
-.timer span{width:48px;height:48px;border-radius:50%;background:#16181d;display:flex;align-items:center;justify-content:center}
+.timer span{width:42px;height:42px;border-radius:50%;background:#16181d;display:flex;align-items:center;justify-content:center}
 .timer.warn span{color:#ff6a5a}
 .slots{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.slot{aspect-ratio:3/4;border-radius:10px;border:3px solid var(--line);box-shadow:0 0 0 2px var(--ink);background:#3a3e47;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--head);font-size:20px;color:#9aa0ab;position:relative}
+.slot{aspect-ratio:5/6;border-radius:10px;border:3px solid var(--line);box-shadow:0 0 0 2px var(--ink);background:#3a3e47;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--head);font-size:20px;color:#9aa0ab;position:relative}
 .slot.next{border-color:var(--amber);animation:blink .8s ease-in-out infinite}
 @keyframes blink{50%{box-shadow:0 0 0 2px var(--ink),0 0 12px 3px var(--amber)}}
 .slot.R{background:var(--rock)} .slot.S{background:var(--scissors)} .slot.P{background:var(--paper)} .slot.X{background:var(--special);color:#fff}
 .slot img{width:80%}
 .slot small{position:absolute;top:2px;left:5px;font-size:10px;color:#0008}
 .pick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.pk{aspect-ratio:1/1.12;border-radius:14px;border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink),inset 0 -5px 0 rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;color:#1b1b1b;gap:2px;transition:transform .06s}
+.pk{aspect-ratio:1/0.92;border-radius:14px;border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink),inset 0 -5px 0 rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;color:#1b1b1b;gap:2px;transition:transform .06s}
 .pk:active{transform:scale(.94)}
 .hpanel{padding:7px 10px;display:flex;flex-direction:column;gap:5px}
 .hrow{display:flex;align-items:center;gap:8px;font-size:12px}
@@ -161,7 +161,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .hrow b.up{color:#ff7a5c}.hrow b.dn{color:#8fb4ef}.hrow b.zero{color:#8a8f99}
 .hb{position:absolute;top:4px;right:5px;font-size:11px;padding:1px 5px;border-radius:6px;border:1px solid #000;color:#fff}
 .hb.up{background:#d8392e}.hb.dn{background:#4a4e57}
-.pk img{width:68%}
+.pk img{width:52%}
 .pk.R{background:var(--rock)} .pk.S{background:var(--scissors)} .pk.P{background:var(--paper)}
 .pk.X{background:linear-gradient(#ee5a3f,#a8231a);color:#fff}
 .pk.X img{width:64%}
@@ -766,12 +766,12 @@ function showInput(side,done){
   const limit=inputTime(me.t.s,op.t.s);const canSpecial=M.turn>=2&&!me.specialUsed;
   const prev=M.history.length?M.history[M.history.length-1]:null;
   const handRow=(f,label,cls)=>`<div class="hrow ${cls}"><span class="hl">${label}</span>${['R','S','P'].map(h=>{const v=f.hands[h];return `<span class="hc">${handMini(h)}<b class="${v>0?'up':v<0?'dn':'zero'}">${v>0?'+'+v:v<0?'−'+Math.abs(v):'±0'}</b></span>`}).join('')}</div>`;
-  const d=screen(QUIT_BAR+hpBarHTML(M)+`<div class="panel hpanel">${handRow(op,`${sideTag(1-side,M)}の相性`,'opp')}<div class="muted" style="font-size:10px;margin-top:-1px">数字は、その手で勝ったときのダメージの増減</div></div>`+
+  const d=screen(QUIT_BAR+hpBarHTML(M)+`<div class="panel hpanel">${handRow(op,`${sideTag(1-side,M)}の相性`,'opp')}</div>`+
     (prev?`<div class="panel prev"><div class="pr"><span>前の${sideTag(side,M)}</span>${prev[side].map(h=>handMini(h)).join('')}</div><div class="pr"><span>前の${sideTag(1-side,M)}</span>${prev[1-side].map(h=>handMini(h)).join('')}</div></div>`:'')+
     `<div class="inhead"><h3>${sideTag(side,M)}の手を6つ選ぶ</h3><div class="timer" data-timer><span data-t>${Math.ceil(limit)}</span></div></div>
     <div class="slots" data-slots>${[0,1,2,3,4,5].map(i=>`<div class="slot" data-slot="${i}">${i+1}</div>`).join('')}</div>
     <div class="spacer"></div>
-    <div class="note">${canSpecial?'「必殺」を押すと、その順番に必殺技が入る（1ターン1回）':M.turn===1?'必殺技は2ターン目から使える':'必殺技はもう使った'}</div>
+    ${M.turn===1?'<div class="note">必殺技は2ターン目から使える</div>':''}
     <div class="pick">${['R','S','P'].map(h=>`<button class="pk ${h}" data-h="${h}" style="position:relative">${me.hands[h]?`<small class="hb ${me.hands[h]>0?'up':'dn'}">${me.hands[h]>0?'+':'−'}${Math.abs(me.hands[h])}</small>`:''}<img src="${HAND_IMG[h]}" alt="">${HAND_NAME[h]}</button>`).join('')}
       ${me.specialUsed&&M.turn>=2?'':`<button class="pk X" data-h="X" ${canSpecial?'':'disabled'}>${SPECIAL_SVG}必殺</button>`}</div>
     <div class="row"><button class="btn gray small" data-undo>↶ 戻す</button><button class="btn orange small" data-done disabled>確定</button></div>`,'dim');
