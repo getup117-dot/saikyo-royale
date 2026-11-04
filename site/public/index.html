@@ -255,9 +255,20 @@ button{font:inherit;color:inherit;cursor:pointer}
 .fld input{width:100%;border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink);border-radius:12px;background:#f6f3ec;color:#111;font:inherit;font-size:18px;padding:12px 14px;outline:none;-webkit-appearance:none;appearance:none}
 .fld input:focus{border-color:var(--amber)}
 .fld input::placeholder{color:#9a968c;font-weight:500}
-.faceset{display:flex;align-items:center;justify-content:center;gap:12px}.faceset .infoimg{max-width:42%;filter:drop-shadow(0 6px 4px #0009)}
-.facectl{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.facectl .btn{width:auto;padding:8px 14px;font-size:15px}.facectl small{font-size:11px;color:#b9b6ae;line-height:1.5}.facectl small b{color:#f2c46b}
-.infoimg{max-height:88px}.optopen .facectl small{display:none}.optopen .facectl .btn{padding:6px 12px;font-size:14px}.optopen .infoimg{max-height:52px}
+.faceset{display:flex;flex-direction:column;align-items:center;gap:6px}
+.fstage{display:flex;align-items:flex-end;justify-content:center;gap:8px;width:100%}
+.fstage .infoimg{max-width:42%;filter:drop-shadow(0 6px 4px #0009)}
+.farrow{color:#f2c46b;font-size:18px;align-self:center;opacity:.8}
+.foe{position:relative;display:flex;flex-direction:column;align-items:center}
+.foe img{height:72px;transform:scaleX(-1);filter:brightness(0) opacity(.55)}
+.foe b{position:absolute;top:38%;font-size:14px;color:#fff;background:var(--red);border:2px solid var(--line);border-radius:6px;padding:0 6px}
+.faceset .btn{width:auto;padding:7px 16px;font-size:14px}
+.optopen .faceset{flex-direction:row;justify-content:center;gap:12px}.optopen .fstage{width:auto}.optopen .foe img{height:44px}.optopen .fstage .infoimg{max-height:48px}.optopen .farrow{font-size:13px}
+.infoimg{max-height:88px}
+.screen.side1{box-shadow:inset 0 0 0 5px var(--blue)}.screen.side2{box-shadow:inset 0 0 0 5px var(--red)}
+.screen.side1 .inhead h3{background:#1d3566}.screen.side2 .inhead h3{background:#6a1f1b}
+.hoch{display:flex;align-items:center;gap:10px;justify-content:center;font-size:16px}.hoch img{height:64px;max-width:80px;object-fit:contain;filter:drop-shadow(0 4px 3px #0009)}.hoch .tag{display:inline-block;border:2px solid var(--line);border-radius:6px;padding:0 6px;margin-right:6px;font-size:13px}.hoch .tag.p1{background:var(--blue)}.hoch .tag.p2{background:var(--red)}.hoch b{font-size:20px;margin-right:2px}
+.winname{text-align:center;font-family:var(--head);font-size:30px;line-height:1.15;color:#fff;paint-order:stroke;-webkit-text-stroke:5px var(--blue);text-shadow:0 3px 0 #000}.winname.p2{-webkit-text-stroke-color:var(--red)}
 .optbox{border:2px dashed #ffffff55;border-radius:14px;background:#0003}
 .opttg{width:100%;background:none;border:0;color:#d8d3c6;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font:inherit;font-size:15px;font-weight:700}
 .opttg small{font-size:12px;color:#a9a59b;font-weight:500;border:1px solid #ffffff44;border-radius:999px;padding:2px 9px}
@@ -372,7 +383,7 @@ function handsText(h){const parts=['R','S','P'].filter(k=>h[k]).map(k=>`${HAND_N
 function atkMod(a){return a===10?[-10,2]:a===20?[-10,1]:a===40?[10,1]:a===50?[10,2]:[0,0]}
 function defMod(d){return d===10?[10,2]:d===20?[10,1]:d===40?[-10,1]:d===50?[-10,2]:[0,0]}
 function inputTime(mySpd,opSpd){return 12+(mySpd-opSpd)/80}
-function mikiriCount(s0,s1){return Math.min(3,Math.floor(Math.abs(s0-s1)/10))}
+function mikiriCount(s0,s1){return s0===s1?0:6}
 
 /* ========= special FX detection ========= */
 const ATTRS={
@@ -689,7 +700,7 @@ const RULES_HTML=`<div class="panel" style="font-weight:500;font-size:14px;line-
     <p style="margin-top:0"><b>1　キャラをつくる</b><br>紙に描いたキャラを撮影して、名前と必殺技を入れる。AIが絵を見て、能力（攻撃・防御・体力・すばやさ、合計120）と、グー・チョキ・パーの相性を決める。</p>
     <p><b>2　6回分の手を決める</b><br>1ターンに、グー・チョキ・パーを6回分まとめて選ぶ。時間は約12秒。相手には見えない。</p>
     <p><b>3　必殺技</b><br>2ターン目から、6回のうち好きな順番に「必殺」を入れられる（1ターンに1回）。どの手にも勝って50ダメージ。必殺どうしは引き分け。</p>
-    <p><b>4　見切り</b><br>あいこのとき、すばやさが高いほうが10ダメージを与える。すばやさの差10ごとに1回、1ターン最大3回まで。</p>
+    <p><b>4　見切り</b><br>あいこのたびに、すばやさが高いほうが10ダメージを与える。すばやさが同じなら出ない。</p>
     <p><b>5　グー・チョキ・パーの相性</b><br>キャラごとに得意な手と苦手な手がある。得意な手で勝つとダメージが増え、苦手な手だと減る（3つの合計は0）。相手の相性は、手を選ぶ画面のボタンに＋／−で出る。</p>
     <p style="margin-bottom:0"><b>6　勝ち負け</b><br>相手のHPを0にしたら勝ち。3ターン終わったら、HPが多く残っているほうの勝ち。</p></div>`;
 /* ========= tutorial ========= */
@@ -725,7 +736,7 @@ function tutPrep(d){
     {sel:'.pcard',text:'これが<b>自分のキャラ</b>。<br>紙に描いた絵を撮影すると、AIが能力（攻撃・防御・体力・すばやさ、合計120）を決める。★が多いほど高い。'},
     {sel:'[data-tut="hands0"]',text:'<b>グー・チョキ・パーの相性</b>。<br>＋の手で勝つとダメージが増え、−の手だと減る。'},
     {sel:'.pcard:last-child',text:'こっちが<b>相手（CPU）</b>。相手の能力や相性も、ここで確認できる。'},
-    {sel:'[data-tut="spd"]',text:'<b>すばやさ</b>が高いほど、手を選ぶ時間が少し長い。<br>さらに、あいこのとき<b>「見切り」</b>で10ダメージを与えられる。'},
+    {sel:'[data-tut="spd"]',text:'<b>すばやさ</b>が高いほど、手を選ぶ時間が少し長い。<br>さらに、あいこのたびに<b>「見切り」</b>で10ダメージを与えられる（すばやさが同じなら出ない）。'},
     {sel:'[data-ok]',wait:'[data-ok]',text:'「<b>バトル開始</b>」を押そう。'}]);
 }
 function tutInput(d,M){
@@ -806,7 +817,7 @@ function showPrep(){
   const M=S.match;const [A,B]=M.F;
   const card=(f,s)=>`<div class="pcard"><span class="ptag p${s+1}">${sideTag(s,M)}</span><img src="${f.img}" alt=""><div class="nm">${esc(f.ch.name)}</div>${f.ch.alias?`<div class="sp" style="color:#f2c46b">${esc(f.ch.alias)}</div>`:''}<div class="sp">${esc(f.ch.special)}</div><div class="ty">${esc(f.t.n)}・HP${f.maxHp}</div>${starsHTML(f.t)}<div class="sp" data-tut="hands${s}" style="margin-top:3px">${handsText(f.hands)}</div></div>`;
   const d=screen(hdr('決戦前夜')+`<div class="versus">${card(A,0)}<div class="vsmall">VS</div>${card(B,1)}</div>
-    <div class="muted" data-tut="spd" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}は見切り：1ターン${mikiriCount(A.t.s,B.t.s)}回まで`}</div>
+    <div class="muted" data-tut="spd" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}が速い：あいこのたびに見切り`}</div>
     <div class="spacer"></div>
     <button class="btn orange" data-ok>バトル開始</button>`,'dim');
   bindBack(d,()=>M.tut?(S.match=null,M.tutBack()):showSelect(1));
@@ -820,8 +831,10 @@ function beginTurn(){
 }
 function showHandoff(side,next){
   const M=S.match;
+  const f=M.F[side];
   const d=screen(QUIT_BAR+`<div class="spacer"></div><div class="panel handoff"><img class="hoimg" src="${AS.handoff}" alt=""><h3>スマホを${sideTag(side,M)}に渡す</h3>
-    <div class="muted">ターン ${M.turn}/3　${sideTag(1-side,M)}は画面を見ないこと</div></div><div class="spacer"></div><button class="btn orange" data-ok>準備OK</button>`,'dim');
+    <div class="hoch"><img src="${f.img}" alt=""><div><span class="tag p${side+1}">${sideTag(side,M)}</span><b>${esc(f.ch.name)}</b>の番</div></div>
+    <div class="muted">ターン ${M.turn}/3　${sideTag(1-side,M)}は画面を見ないこと</div></div><div class="spacer"></div><button class="btn orange" data-ok>準備OK</button>`,'dim side'+(side+1));
   bindQuit(d);$('[data-ok]',d).onclick=next;
 }
 function hpBarHTML(M){
@@ -846,7 +859,7 @@ function showInput(side,done){
     ${M.turn===1?'<div class="note">必殺技は2ターン目から使える</div>':''}
     <div class="pick">${['R','S','P'].map(h=>`<button class="pk ${h}" data-h="${h}" style="position:relative">${me.hands[h]?`<small class="hb ${me.hands[h]>0?'up':'dn'}">${me.hands[h]>0?'+':'−'}${Math.abs(me.hands[h])}</small>`:''}<img src="${HAND_IMG[h]}" alt="">${HAND_NAME[h]}</button>`).join('')}
       ${me.specialUsed&&M.turn>=2?'':`<button class="pk X" data-h="X" ${canSpecial?'':'disabled'}>${SPECIAL_SVG}必殺</button>`}</div>
-    <div class="row"><button class="btn gray small" data-undo>↶ 戻す</button><button class="btn orange small" data-done disabled>確定</button></div>`,'dim');
+    <div class="row"><button class="btn gray small" data-undo>↶ 戻す</button><button class="btn orange small" data-done disabled>確定</button></div>`,'dim side'+(side+1));
   bindQuit(d);
   const hands=[];let finished=false;
   const slots=$$('[data-slot]',d);
@@ -1048,8 +1061,7 @@ function narration(M,w){const [A,B]=M.F;
   if(ko&&M.turn<=2)pools.push([`わずか${M.turn}ターン。${Wn}が圧倒的な力で決着をつけた。`,`戦いは長くは続かなかった。${Wn}、速攻の勝利。`]);
   if((st.strongHits||0)>=2&&W.hands[top]>0)pools.push([`${Wn}は得意の${HAND_NAME[top]}で、幾度も${Ln}を打ち砕いた。`,`読まれてなお、${Wn}の${HAND_NAME[top]}は止まらなかった。`]);
   if(st.maxCombo>=3)pools.push([`${Wn}の連撃が、嵐のように${Ln}を飲み込んだ。`,`止まらない連撃。${Ln}に反撃の隙はなかった。`]);
-  if(st.mikiri>=2)pools.push([`${Wn}は${KANJI_NUM[Math.min(6,st.mikiri)]}度の見切りで、${Ln}の攻撃をことごとく流した。`,`速さこそ力。${st.mikiri}度の見切りが、${Wn}を勝利へ導いた。`]);
-  else if(st.mikiri===1)pools.push([`ただ一度の見切り。その刹那が、${Wn}に流れを呼び込んだ。`]);
+  if(st.mikiri>=4)pools.push([`${Wn}は${st.mikiri<=6?KANJI_NUM[st.mikiri]:st.mikiri}度の見切りで、${Ln}の攻撃をことごとく流した。`,`速さこそ力。${st.mikiri}度の見切りが、${Wn}を勝利へ導いた。`]);
   if(!ko&&W.hp-L.hp<=40)pools.push(['紙一重。わずかな差が、勝者と敗者を分けた。',`あと一撃。${Ln}の刃は、ほんのわずかに届かなかった。`]);
   if(!pools.length)pools.push([`${Wn}の勝利。だが、${Ln}の目はまだ死んでいない。`,`勝者は${Wn}。戦場に、新たな伝説が刻まれた。`,`${Wn}、${Ln}を下す。次なる挑戦者を待つ。`]);
   return pick(pools[0].concat(pools.length>1&&Math.random()<.35?pools[1]:[]))}
@@ -1059,7 +1071,7 @@ function showResult(){
   if(w>=0){const st=M.stats[w];const f=M.F[w];
     if(st.specialFinish)titles.push('必殺技フィニッシャー');
     if(st.maxCombo>=3)titles.push(`${KANJI_NUM[Math.min(6,st.maxCombo)]}連撃の達人`);
-    if(st.mikiri>=4)titles.push('神速の見切り王');else if(st.mikiri>=2)titles.push('見切り王');else if(st.mikiri===1&&titles.length<2)titles.push('見切りの使い手');
+    if(st.mikiri>=6)titles.push('神速の見切り王');else if(st.mikiri>=4)titles.push('見切り王');else if(st.mikiri>=2&&titles.length<2)titles.push('見切りの使い手');
     if(f.taken===0)titles.push('パーフェクト王');
     if(st.behind)titles.push('大逆転の勇者');
     {const L=M.F[1-w];const ko=L.hp<=0;
@@ -1072,7 +1084,7 @@ function showResult(){
   const mk=M.stats.map(x=>x.mikiri||0);
   const d=screen(`<div class="ribbon ${w===1?'p2':w<0?'draw':''}">${w<0?'相打ち':sideTag(w,M)+' WIN!'}</div>
     <div class="spot">${w>=0?`<img class="win" src="${wf.ch.img}" alt="">`:`<img class="win" src="${A.ch.img}" alt="" style="max-width:45%"><img class="win" src="${B.img}" alt="" style="max-width:45%">`}${w>=0?`<img class="crowd" src="${AS.crowd}" alt="">`:''}</div>
-    ${w>=0?`<div style="text-align:center;font-size:20px">${esc(wf.ch.name)}</div><div class="titles">${titles.slice(0,2).map(t=>`<span>${t}</span>`).join('')}</div>
+    ${w>=0?`<div class="winname p${w+1}">${esc(wf.ch.name)}</div><div class="titles">${titles.slice(0,2).map(t=>`<span>${t}</span>`).join('')}</div>
       <div class="quote">「${esc(winQuote(wf.ch))}」</div>`:''}
     <div class="narr">${esc(narration(M,w))}</div>
     <div class="muted" style="text-align:center">残存HP　${sideTag(0,M)} ${A.hp} ／ ${sideTag(1,M)} ${B.hp}${mk[0]+mk[1]?`<br>見切り　${sideTag(0,M)} ${mk[0]}回 ／ ${sideTag(1,M)} ${mk[1]}回`:''}</div>
@@ -1152,7 +1164,7 @@ function createCut(C){
     C.final=exportImg(st);createInfo(C)};
 }
 function createInfo(C){
-  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div class="faceset"><img class="infoimg" data-fimg src="${C.final}" alt=""><div class="facectl"><button type="button" class="btn gray small" data-flip>⇄ 左右反転</button><small>キャラが<b>右 →</b> を向くようにする<br>正面ならそのままでOK</small></div></div>
+  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div class="faceset"><div class="fstage"><img class="infoimg" data-fimg src="${C.final}" alt=""><span class="farrow">▶</span><div class="foe"><img src="${(S.chars.find(c=>c.id==='s2')||S.chars[0]).img}" alt=""><b>敵</b></div></div><button type="button" class="btn gray small" data-flip>⇄ 向きを変える</button></div>
     <label class="fld"><b>名前</b><input data-name maxlength="12" placeholder="例：漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
     <label class="fld"><b>必殺技の名前</b><input data-sp maxlength="16" placeholder="例：獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
     <div class="optbox ${C.bio||C.desc?'open':''}" data-opt>
