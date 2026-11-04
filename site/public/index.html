@@ -674,10 +674,11 @@ function showMode(){
       <div class="cpulv">${['weak','normal','strong'].map(k=>`<button data-lv="${k}" class="${S.cpuLevel===k?'on':''}">${{weak:'弱い',normal:'ふつう',strong:'強い'}[k]}</button>`).join('')}</div>
       <button class="btn orange" data-cpu style="padding:18px">🤖 CPUと対戦</button>
     </div>`,'dim');
-  bindBack(d,showHome);
+  bindBack(d,()=>{S.preset=null;showHome()});
   $$('[data-lv]',d).forEach(b=>b.onclick=()=>{S.cpuLevel=b.dataset.lv;$$('[data-lv]',d).forEach(x=>x.classList.toggle('on',x===b))});
-  $('[data-2p]',d).onclick=()=>{S.mode='2p';S.pick=[null,null];showSelect(0)};
-  $('[data-cpu]',d).onclick=()=>{S.mode='cpu';S.pick=[null,null];showSelect(0)};
+  const go=mode=>{S.mode=mode;if(S.preset){S.pick=[S.preset,null];S.preset=null;showSelect(1)}else{S.pick=[null,null];showSelect(0)}};
+  $('[data-2p]',d).onclick=()=>go('2p');
+  $('[data-cpu]',d).onclick=()=>go('cpu');
 }
 function showSelect(side){
   const who=side===0?'1P':(S.mode==='cpu'?'CPU':'2P');
@@ -686,7 +687,7 @@ function showSelect(side){
     <div class="grid">${S.chars.map(c=>`<button class="ccard ${S.pick[side]===c.id?'sel':''}" data-id="${c.id}"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${esc(c.name)}</div><div class="ty">${statsOf(c).n}</div>${starsHTML(statsOf(c))}</button>`).join('')}
     <button class="ccard newcard" data-new><b>＋</b>キャラをつくる</button></div>`,'dim');
   bindBack(d,()=>side===0?showMode():showSelect(0));
-  $('[data-new]',d).onclick=()=>showCreate(()=>showSelect(side));
+  $('[data-new]',d).onclick=()=>showCreate(Object.assign(()=>showSelect(side),{pickSide:side}));
   const go=id=>{S.pick[side]=id;if(side===0)showSelect(1);else startMatch()};
   $$('[data-id]',d).forEach(b=>b.onclick=()=>go(b.dataset.id));
   const r=$('[data-rand]',d);if(r)r.onclick=()=>go(S.chars[rnd(S.chars.length)].id);
@@ -1139,9 +1140,20 @@ async function kanteiAnim(C){
   $('[data-re]',d).onclick=()=>C.ai?createKantei(C):createKanteiManual(C);
   $('[data-ok]',d).onclick=()=>{const ch={id:'u'+Date.now().toString(36)+rnd(1000),name:C.name,bio:C.bio,alias:C.alias,special:C.special,desc:C.desc,features:C.feats.map(f=>f.name),feats:C.feats.slice(),type,stats:{...C.stats},style:C.style,hands:{...C.hands},fx:C.fx||detectFx(C.special),img:C.final};
     S.chars.push(ch);if(!saveUserChars())toast('この端末に記録できなかった（ページを閉じると消える）',3000);
-    if(S.pick&&C.onDone!==showHome){}C.onDone()};
+    showCreated(ch,C.onDone)};
 }
 
+function showCreated(ch,onDone){
+  const st=statsOf(ch);
+  const d=screen(hdr('召喚完了',false)+`<div class="spacer"></div><div class="kantei"><div class="spot" style="min-height:200px;flex:none;width:100%"><img class="win" src="${ch.img}" alt=""></div>
+    <div style="font-size:22px">${esc(ch.name)}</div>${ch.alias?`<div style="color:#f2c46b">${esc(ch.alias)}</div>`:''}<div class="muted">${esc(st.n)}・HP${hpOf(st)}・${handsText(handsOf(ch))}</div></div>
+    <div class="muted" style="text-align:center">戦士名鑑に登録した。このままバトルする？</div><div class="spacer"></div>
+    <button class="btn blue" data-fight>⚔ このキャラでバトルする</button>
+    <div class="row"><button class="btn gray small" data-more>✎ もう1体つくる</button><button class="btn gray small" data-home>トップに戻る</button></div>`,'dim');
+  $('[data-fight]',d).onclick=()=>{if(onDone&&onDone.pickSide!=null){const sd=onDone.pickSide;S.pick[sd]=ch.id;if(sd===0)showSelect(1);else startMatch()}else{S.preset=ch.id;showMode()}};
+  $('[data-more]',d).onclick=()=>showCreate(onDone);
+  $('[data-home]',d).onclick=()=>showHome();
+}
 /* ========= boot ========= */
 (async function boot(){
   app.innerHTML='<div class="screen" style="align-items:center;justify-content:center"><img src="'+AS.emblem+'" style="width:120px;opacity:.8" alt=""><div class="muted">召喚陣を展開中……</div></div>';
