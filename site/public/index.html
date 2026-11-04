@@ -58,6 +58,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .title-logo{width:100%;max-width:400px;margin:4px auto 0;display:block;filter:drop-shadow(0 4px 0 #000a)}
 .subcopy{text-align:center;font-family:var(--head);font-weight:400;font-size:17px;letter-spacing:.12em;margin-top:-6px;text-shadow:0 2px 0 #000}
 .vs-stage{position:relative;flex:1;min-height:200px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 4px}
+.vs-stage img.ch:last-child{transform:scaleX(-1)}
 .vs-stage img.ch{width:42%;max-height:240px;object-fit:contain;filter:drop-shadow(0 6px 4px #0009)}
 .vs-text{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) skewX(-8deg);font-family:var(--head);font-size:54px;color:var(--amber);
   -webkit-text-stroke:3px var(--ink);paint-order:stroke;text-shadow:0 4px 0 #000}
@@ -254,7 +255,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .fld input{width:100%;border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink);border-radius:12px;background:#f6f3ec;color:#111;font:inherit;font-size:18px;padding:12px 14px;outline:none;-webkit-appearance:none;appearance:none}
 .fld input:focus{border-color:var(--amber)}
 .fld input::placeholder{color:#9a968c;font-weight:500}
-.infoimg{max-height:88px}.optopen .infoimg{max-height:52px}
+.faceset{display:flex;align-items:center;justify-content:center;gap:12px}.faceset .infoimg{max-width:42%;filter:drop-shadow(0 6px 4px #0009)}
+.facectl{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.facectl .btn{width:auto;padding:8px 14px;font-size:15px}.facectl small{font-size:11px;color:#b9b6ae;line-height:1.5}.facectl small b{color:#f2c46b}
+.infoimg{max-height:88px}.optopen .facectl small{display:none}.optopen .facectl .btn{padding:6px 12px;font-size:14px}.optopen .infoimg{max-height:52px}
 .optbox{border:2px dashed #ffffff55;border-radius:14px;background:#0003}
 .opttg{width:100%;background:none;border:0;color:#d8d3c6;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font:inherit;font-size:15px;font-weight:700}
 .opttg small{font-size:12px;color:#a9a59b;font-weight:500;border:1px solid #ffffff44;border-radius:999px;padding:2px 9px}
@@ -415,7 +418,7 @@ const BEATS={R:'S',S:'P',P:'R'};
 const SPECIAL_DMG=50;
 let MIKIRI_DMG=10;
 const KANJI_NUM=['','一','二','三','四','五','六'];
-function newFighter(ch){const t=statsOf(ch);return {ch,t,hands:handsOf(ch),maxHp:hpOf(t),hp:hpOf(t),specialUsed:false,taken:0}}
+function newFighter(ch){const t=statsOf(ch);return {ch,img:ch.img,t,hands:handsOf(ch),maxHp:hpOf(t),hp:hpOf(t),specialUsed:false,taken:0}}
 function newTurnMods(f){const am=atkMod(f.t.a),dm=defMod(f.t.d);return {atk:am[0],atkLeft:am[1],atkN:am[1],def:dm[0],defLeft:dm[1],defN:dm[1]}}
 function resolveTurn(F,H,turn,stats){
   const mods=[newTurnMods(F[0]),newTurnMods(F[1])];
@@ -624,6 +627,10 @@ function stickerize(c,max=440){
   o.shadowColor='rgba(0,0,0,.35)';o.shadowBlur=3;o.drawImage(sil,0,0);o.shadowColor='transparent';o.drawImage(body,pad+2,pad+2);
   return out;
 }
+const MIRROR=new Map();
+async function mirrorURL(src){if(MIRROR.has(src))return MIRROR.get(src);
+  try{const im=await loadImage(src);const c=document.createElement('canvas');c.width=im.naturalWidth||im.width;c.height=im.naturalHeight||im.height;const x=c.getContext('2d');x.translate(c.width,0);x.scale(-1,1);x.drawImage(im,0,0);const u=exportImg(c);MIRROR.set(src,u);return u}catch(e){return src}}
+async function setFacing(M){M.F[0].img=M.F[0].ch.img;M.F[1].img=await mirrorURL(M.F[1].ch.img)}
 function exportImg(c){let u='';try{u=c.toDataURL('image/webp',.85)}catch(e){}if(!u.startsWith('data:image/webp'))u=c.toDataURL('image/png');return u}
 
 /* ========= sample characters (仮) ========= */
@@ -655,10 +662,10 @@ async function svgToSticker(svg){const im=await loadImage('data:image/svg+xml;ch
 async function buildSamples(){
   const base=[
     {id:'s1',builtin:true,name:'ファイヤーヒーロー',special:'スーパーほのおパンチ',desc:'燃え盛る拳が、敵を灰に還す。',bio:'炎の街を守る孤高の拳士。',alias:'紅蓮の拳士',features:['大きなこぶし','マント'],hands:{R:20,S:0,P:-20},winLines:['燃え尽きたか。俺の拳は、まだ熱い。','紅蓮の拳に、敗北の文字はない。','街は守った。……次は誰だ。'],svg:HERO_SVG},
-    {id:'s2',builtin:true,name:'パクリュウ',special:'かみつきアタック',desc:'その牙は、鋼すら噛み砕く。',bio:'鉄の山を喰らい続けた古竜。',alias:'鋼喰らいの古竜',features:['キバ・ツメ','かたいウロコ'],hands:{R:0,S:10,P:-10},winLines:['鋼より脆い。それが貴様だ。','喰らい尽くした。次の獲物を寄越せ。','古竜の牙を、甘く見たな。'],svg:DRAGON_SVG}
+    {id:'s2',faceL:true,builtin:true,name:'パクリュウ',special:'かみつきアタック',desc:'その牙は、鋼すら噛み砕く。',bio:'鉄の山を喰らい続けた古竜。',alias:'鋼喰らいの古竜',features:['キバ・ツメ','かたいウロコ'],hands:{R:0,S:10,P:-10},winLines:['鋼より脆い。それが貴様だ。','喰らい尽くした。次の獲物を寄越せ。','古竜の牙を、甘く見たな。'],svg:DRAGON_SVG}
   ];
   const out=[];
-  for(const b of base){let img='';try{img=await svgToSticker(b.svg)}catch(e){img='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(b.svg)}
+  for(const b of base){let img='';try{img=await svgToSticker(b.svg);if(b.faceL)img=await mirrorURL(img)}catch(e){img='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(b.svg)}
     out.push({id:b.id,builtin:true,name:b.name,special:b.special,desc:b.desc,bio:b.bio,alias:b.alias,features:b.features,type:typeFromFeatures(b.features),hands:b.hands,winLines:b.winLines,fx:detectFx(b.special),img})}
   return out;
 }
@@ -691,7 +698,7 @@ function startTutorial(back=showHome){
   const c0=S.chars.find(c=>c.id==='s1')||S.chars[0],c1=S.chars.find(c=>c.id==='s2')||S.chars[1]||S.chars[0];
   S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:true,cpuLevel:'weak',tut:true,tutBack:back,
     stats:[{mikiri:0,maxCombo:0,specialFinish:false,behind:false},{mikiri:0,maxCombo:0,specialFinish:false,behind:false}],hands:[null,null]};
-  showPrep();
+  const M=S.match;setFacing(M).then(()=>{if(S.match===M)showPrep()});
 }
 function coach(steps){return new Promise(async res=>{
   document.querySelectorAll('.coach').forEach(e=>e.remove());
@@ -792,28 +799,24 @@ function startMatch(){
   const c0=S.chars.find(c=>c.id===S.pick[0]),c1=S.chars.find(c=>c.id===S.pick[1]);
   S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:S.mode==='cpu',cpuLevel:S.cpuLevel,cpuSpecialTurn:2+rnd(2),
     stats:[{mikiri:0,maxCombo:0,specialFinish:false,behind:false},{mikiri:0,maxCombo:0,specialFinish:false,behind:false}],hands:[null,null]};
-  showPrep();
+  const M=S.match;setFacing(M).then(()=>{if(S.match===M)showPrep()});
 }
 const sideTag=(s,M)=>s===0?'1P':(M.cpu?'CPU':'2P');
 function showPrep(){
   const M=S.match;const [A,B]=M.F;
-  const card=(f,s)=>`<div class="pcard"><span class="ptag p${s+1}">${sideTag(s,M)}</span><img src="${f.ch.img}" alt=""><div class="nm">${esc(f.ch.name)}</div>${f.ch.alias?`<div class="sp" style="color:#f2c46b">${esc(f.ch.alias)}</div>`:''}<div class="sp">${esc(f.ch.special)}</div><div class="ty">${esc(f.t.n)}・HP${f.maxHp}</div>${starsHTML(f.t)}<div class="sp" data-tut="hands${s}" style="margin-top:3px">${handsText(f.hands)}</div></div>`;
+  const card=(f,s)=>`<div class="pcard"><span class="ptag p${s+1}">${sideTag(s,M)}</span><img src="${f.img}" alt=""><div class="nm">${esc(f.ch.name)}</div>${f.ch.alias?`<div class="sp" style="color:#f2c46b">${esc(f.ch.alias)}</div>`:''}<div class="sp">${esc(f.ch.special)}</div><div class="ty">${esc(f.t.n)}・HP${f.maxHp}</div>${starsHTML(f.t)}<div class="sp" data-tut="hands${s}" style="margin-top:3px">${handsText(f.hands)}</div></div>`;
   const d=screen(hdr('決戦前夜')+`<div class="versus">${card(A,0)}<div class="vsmall">VS</div>${card(B,1)}</div>
     <div class="muted" data-tut="spd" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}は見切り：1ターン${mikiriCount(A.t.s,B.t.s)}回まで`}</div>
     <div class="spacer"></div>
-    ${M.cpu?'':'<div class="panel handoff" style="padding:8px;flex-direction:row;justify-content:center;gap:12px"><img class="hoimg" src="'+AS.handoff+'" alt="" style="width:84px"><h3 style="font-size:22px">スマホを1Pに渡す</h3></div>'}
-    <button class="btn orange" data-ok>${M.cpu?'バトル開始':'準備OK'}</button>`,'dim');
+    <button class="btn orange" data-ok>バトル開始</button>`,'dim');
   bindBack(d,()=>M.tut?(S.match=null,M.tutBack()):showSelect(1));
   $('[data-ok]',d).onclick=()=>beginTurn();
   if(M.tut)tutPrep(d);
 }
-function turnOrder(M){return M.turn===2?[1,0]:[0,1]}
 function beginTurn(){
   const M=S.match;M.hands=[null,null];M.F[0].specialUsed=false;M.F[1].specialUsed=false;
   if(M.cpu){M.hands[1]=M.tut&&TUT_CPU[M.turn]?TUT_CPU[M.turn].slice():cpuHands(M,1);showInput(0,()=>playTurn())}
-  else{const [f,s]=turnOrder(M);
-    const after=()=>showHandoff(s,()=>showInput(s,()=>playTurn()));
-    if(M.turn===1)showInput(f,after);else showHandoff(f,()=>showInput(f,after));}
+  else showHandoff(0,()=>showInput(0,()=>showHandoff(1,()=>showInput(1,()=>playTurn()))));
 }
 function showHandoff(side,next){
   const M=S.match;
@@ -823,7 +826,7 @@ function showHandoff(side,next){
 }
 function hpBarHTML(M){
   const side=(s)=>{const f=M.F[s];const p=f.hp/f.maxHp*100;const cls=p<25?'low':p<55?'mid':'';
-    return `<div class="hpside ${s?'r':''}" data-side="${s}"><img src="${f.ch.img}" alt=""><div class="meta"><span class="tag p${s+1}">${sideTag(s,M)}</span>
+    return `<div class="hpside ${s?'r':''}" data-side="${s}"><img src="${f.img}" alt=""><div class="meta"><span class="tag p${s+1}">${sideTag(s,M)}</span>
       <div class="hpnum"><small>HP</small><span data-hp>${f.hp}</span></div><div class="bar"><i data-bar class="${cls}" style="width:${p}%"></i></div></div></div>`};
   return `<div class="hpbar">${side(0)}<div class="turnlbl">ターン<b data-turn>${M.turn}/3</b></div>${side(1)}</div>`;
 }
@@ -875,7 +878,7 @@ async function playTurn(){
   const events=resolveTurn(M.F,H,M.turn,M.stats);
   M.history.push([H[0].slice(),H[1].slice()]);
   const d=screen(QUIT_BAR+hpBarHTML(M)+`<div class="panel reveal" data-rev>${[0,1].map(s=>H[s].map((h,i)=>`<span class="mini q" data-r="${s}-${i}">?</span>`).join('')).join('<div class="sep"></div>')}</div>
-    <div class="stage" data-stage><div class="fighter l" data-f="0"><img src="${M.F[0].ch.img}" alt=""></div><div class="fighter r" data-f="1"><img src="${M.F[1].ch.img}" alt=""></div></div>`,'');
+    <div class="stage" data-stage><div class="fighter l" data-f="0"><img src="${M.F[0].img}" alt=""></div><div class="fighter r" data-f="1"><img src="${M.F[1].img}" alt=""></div></div>`,'');
   updateHP(d,M,hpBefore);bindQuit(d);
   const stage=$('[data-stage]',d);
   const hint=document.createElement('div');hint.className='ffhint';hint.textContent='画面タップで早送り';stage.appendChild(hint);
@@ -960,7 +963,7 @@ function buildCutin(host,f,cls=''){
   const fx=f.ch.fx||detectFx(f.ch.special);const [t1,t2]=tintCss(fx);
   const c=document.createElement('div');c.className='cutin '+cls;
   c.innerHTML=`<div class="bg"></div><div class="tint" style="background:${t1}"></div><div class="tint2" style="background:${t2}"></div><div class="lines"></div><div class="fxl"></div>
-    <div class="big"><img src="${f.ch.img}" alt=""></div><div class="band"><div class="badges">${fx.attrs.map(a=>`<span class="badge" style="background:${ATTRS[a].c1}">${ATTRS[a].n}</span>`).join('')}<span class="badge" style="background:#333">${MOTIONS[fx.motion]}</span></div><div class="nm">${esc(f.ch.special)}</div></div><div class="flash"></div>`;
+    <div class="big"><img src="${f.img||f.ch.img}" alt=""></div><div class="band"><div class="badges">${fx.attrs.map(a=>`<span class="badge" style="background:${ATTRS[a].c1}">${ATTRS[a].n}</span>`).join('')}<span class="badge" style="background:#333">${MOTIONS[fx.motion]}</span></div><div class="nm">${esc(f.ch.special)}</div></div><div class="flash"></div>`;
   const lay=document.createElement('div');lay.style.cssText='position:absolute;inset:0';c.insertBefore(lay,$('.big',c));
   fx.attrs.forEach((at,i)=>{const im=document.createElement('img');im.className='fxim fxback';im.src=FXIMG[at];
     const two=fx.attrs.length>1;im.style.cssText+=`width:${two?78:105}%;left:${two?(i?30:-8):-2}%;top:${two?(i?30:8):12}%;opacity:0`;lay.appendChild(im)});
@@ -1068,7 +1071,7 @@ function showResult(){
   if(!M.recorded){M.recorded=true;recordMatch(M,w,titles.slice(0,2))}
   const mk=M.stats.map(x=>x.mikiri||0);
   const d=screen(`<div class="ribbon ${w===1?'p2':w<0?'draw':''}">${w<0?'相打ち':sideTag(w,M)+' WIN!'}</div>
-    <div class="spot">${w>=0?`<img class="win" src="${wf.ch.img}" alt="">`:`<img class="win" src="${A.ch.img}" alt="" style="max-width:45%"><img class="win" src="${B.ch.img}" alt="" style="max-width:45%">`}${w>=0?`<img class="crowd" src="${AS.crowd}" alt="">`:''}</div>
+    <div class="spot">${w>=0?`<img class="win" src="${wf.ch.img}" alt="">`:`<img class="win" src="${A.ch.img}" alt="" style="max-width:45%"><img class="win" src="${B.img}" alt="" style="max-width:45%">`}${w>=0?`<img class="crowd" src="${AS.crowd}" alt="">`:''}</div>
     ${w>=0?`<div style="text-align:center;font-size:20px">${esc(wf.ch.name)}</div><div class="titles">${titles.slice(0,2).map(t=>`<span>${t}</span>`).join('')}</div>
       <div class="quote">「${esc(winQuote(wf.ch))}」</div>`:''}
     <div class="narr">${esc(narration(M,w))}</div>
@@ -1149,7 +1152,7 @@ function createCut(C){
     C.final=exportImg(st);createInfo(C)};
 }
 function createInfo(C){
-  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div style="display:flex;justify-content:center"><img class="infoimg" src="${C.final}" alt="" style="max-width:45%;filter:drop-shadow(0 6px 4px #0009)"></div>
+  const d=screen(hdr('召喚の儀')+stepsHTML(4)+`<div class="faceset"><img class="infoimg" data-fimg src="${C.final}" alt=""><div class="facectl"><button type="button" class="btn gray small" data-flip>⇄ 左右反転</button><small>キャラが<b>右 →</b> を向くようにする<br>正面ならそのままでOK</small></div></div>
     <label class="fld"><b>名前</b><input data-name maxlength="12" placeholder="例：漆黒の炎竜ヴァルガ" value="${esc(C.name)}" autocomplete="off"></label>
     <label class="fld"><b>必殺技の名前</b><input data-sp maxlength="16" placeholder="例：獄炎ドラゴンブレス" value="${esc(C.special)}" autocomplete="off"></label>
     <div class="optbox ${C.bio||C.desc?'open':''}" data-opt>
@@ -1160,6 +1163,7 @@ function createInfo(C){
       </div></div>
     <div class="spacer"></div><button class="btn orange" data-next>鑑定の儀へ ▶</button>`,'dim');
   bindBack(d,()=>createCut(C));
+  $('[data-flip]',d).onclick=async()=>{const b=$('[data-flip]',d);b.disabled=true;C.final=await mirrorURL(C.final);$('[data-fimg]',d).src=C.final;b.disabled=false};
   {const ob=$('[data-opt]',d);if(ob.classList.contains('open'))d.classList.add('optopen');$('[data-opttg]',d).onclick=()=>{ob.classList.add('open');d.classList.add('optopen');setTimeout(()=>$('[data-bio]',d).focus(),50)}}
   const nm=$('[data-name]',d),bio=$('[data-bio]',d),sp=$('[data-sp]',d),ds=$('[data-desc]',d);
   const sync=()=>{C.name=nm.value.trim();C.bio=bio.value.trim();C.special=sp.value.trim();C.desc=ds.value.trim();C.fx=detectFx(C.special)};
