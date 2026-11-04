@@ -265,6 +265,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .faceset .btn{width:auto;padding:7px 16px;font-size:14px}
 .optopen .faceset{flex-direction:row;justify-content:center;gap:12px}.optopen .fstage{width:auto}.optopen .foe img{height:44px}.optopen .fstage .infoimg{max-height:48px}.optopen .farrow{font-size:13px}
 .infoimg{max-height:88px}
+.cpulvtag{color:#f2c46b}
+.streak{text-align:center;font-family:var(--head);font-size:22px;color:#ffcf3a;line-height:1.3}.streak small{display:inline-block;margin-left:8px;font-size:13px;background:var(--red);color:#fff;border-radius:999px;padding:1px 8px;vertical-align:middle}.streak em{display:block;font-style:normal;font-family:inherit;font-size:12px;color:#d8d3c6}.streak.lost{font-size:16px;color:#d8d3c6}
 .foundbn{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:40;background:linear-gradient(#f5c443,#d98a12);color:#201000;border:3px solid var(--line);box-shadow:0 0 0 3px var(--ink),0 0 30px #f5c443;border-radius:14px;padding:10px 22px;text-align:center;animation:foundin .5s ease-out}.foundbn{white-space:nowrap}.foundbn b{display:block;font-family:var(--head);font-size:26px}.foundbn small{font-size:13px;font-weight:700}
 @keyframes foundin{from{transform:translateX(-50%) scale(.3);opacity:0}}
 .ccard{position:relative}.hidbadge{position:absolute;left:6px;top:6px;z-index:2;font-size:10px;background:#7a3cc4;color:#fff;border:1px solid #fff8;border-radius:999px;padding:1px 7px}
@@ -515,7 +517,7 @@ function loadUnlocked(){try{const v=JSON.parse(localStorage.getItem(UNLOCK_KEY)|
 function saveUnlocked(a){try{localStorage.setItem(UNLOCK_KEY,JSON.stringify(a))}catch(e){}}
 function prepHidden(h){return Object.assign({},h,{builtin:true,hidden:true,fx:h.fx||detectFx(h.special),type:h.type||'balance'})}
 function lockedHidden(){const u=loadUnlocked();return HIDDEN.filter(h=>!u.includes(h.id)).map(prepHidden)}
-function randomCpu(exclude){const pool=S.chars.concat(lockedHidden());const p=pool.filter(c=>c.id!==exclude);const a=p.length?p:pool;return a[rnd(a.length)]}
+function randomCpu(exclude){const prev=S.lastCpu;const pool=S.chars.concat(lockedHidden());let p=pool.filter(c=>c.id!==exclude);if(p.length>2)p=p.filter(c=>c.id!==prev);const a=p.length?p:pool;const c=a[rnd(a.length)];S.lastCpu=c.id;return c}
 function loadRecs(){try{const v=JSON.parse(localStorage.getItem(REC_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(e){return {}}}
 function saveRecs(r){try{localStorage.setItem(REC_KEY,JSON.stringify(r))}catch(e){}}
 function recOf(id){const r=loadRecs()[id]||{};return {w:r.w|0,l:r.l|0,d:r.d|0,titles:Array.isArray(r.titles)?r.titles:[]}}
@@ -525,7 +527,13 @@ function recordMatch(M,w,titles){const R=loadRecs();
   saveRecs(R)}
 function recHTML(id){const r=recOf(id);if(!r.w&&!r.l&&!r.d)return '<div class="rec muted">まだ戦っていない</div>';
   return `<div class="rec"><b>${r.w}勝</b> ${r.l}敗${r.d?` ${r.d}分`:''}</div>${r.titles.length?`<div class="rect">${r.titles.slice(-3).map(t=>`<span>${esc(t)}</span>`).join('')}${r.titles.length>3?`<span>ほか${r.titles.length-3}</span>`:''}</div>`:''}`}
-const S={chars:[],mode:'2p',cpuLevel:'normal',pick:[null,null],match:null};
+const S={chars:[],mode:'2p',cpuLevel:'normal',pick:[null,null],match:null,streak:0};
+const BEST_KEY='saikyo_royale_best_streak_v1';
+function bestStreak(){try{return +localStorage.getItem(BEST_KEY)||0}catch(e){return 0}}
+function saveBest(n){try{localStorage.setItem(BEST_KEY,String(n))}catch(e){}}
+const CPU_LVS=['weak','normal','strong'];
+/* CPUレベル：選んだ強さから始まり、1勝ごとに1上がる。Lv4以降は「強い」の動き＋HPが20ずつ増える */
+function cpuLvInfo(){const lv=CPU_LVS.indexOf(S.cpuLevel)+1+S.streak;return {lv,brain:CPU_LVS[Math.min(2,lv-1)],hp:Math.min(200,Math.max(0,lv-3)*20)}}
 function loadUserChars(){try{const v=JSON.parse(localStorage.getItem(LS_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
 function saveUserChars(){try{localStorage.setItem(LS_KEY,JSON.stringify(S.chars.filter(c=>!c.builtin)));return true}catch(e){return false}}
 
@@ -807,13 +815,14 @@ function showMode(){
       <div style="font-size:14px">CPUの強さを選んでから、下のボタンを押す<br><small style="color:#b9b6ae;font-weight:500">相手のキャラは毎回ランダム</small></div>
       <div class="cpulv">${['weak','normal','strong'].map(k=>`<button data-lv="${k}" class="${S.cpuLevel===k?'on':''}">${{weak:'弱い',normal:'ふつう',strong:'強い'}[k]}</button>`).join('')}</div>
       <button class="btn orange" data-cpu style="padding:18px">🤖 CPUと対戦</button>
+      <div class="muted" style="font-size:12px">勝つたびにCPUのレベルが上がる${bestStreak()?`　最高記録 ${bestStreak()}連勝`:''}</div>
     </div>
     <button class="btn gray" data-tut>🔰 あそび方を見る</button>`,'dim');
   bindBack(d,()=>{S.preset=null;showHome()});
   $$('[data-lv]',d).forEach(b=>b.onclick=()=>{S.cpuLevel=b.dataset.lv;$$('[data-lv]',d).forEach(x=>x.classList.toggle('on',x===b))});
   const go=mode=>{S.mode=mode;if(S.preset){S.pick=[S.preset,null];S.preset=null;afterP1()}else{S.pick=[null,null];showSelect(0)}};
   $('[data-2p]',d).onclick=()=>go('2p');
-  $('[data-cpu]',d).onclick=()=>go('cpu');
+  $('[data-cpu]',d).onclick=()=>{S.streak=0;go('cpu')};
   $('[data-tut]',d).onclick=()=>{S.preset=null;startTutorial(showMode)};
 }
 function afterP1(){if(S.mode==='cpu'){S.cpuPick=randomCpu(S.pick[0]);S.pick[1]=S.cpuPick.id;startMatch()}else showSelect(1)}
@@ -838,16 +847,17 @@ function startMatch(){
   const c0=S.chars.find(c=>c.id===S.pick[0]);let c1=S.chars.find(c=>c.id===S.pick[1]);let found=false;
   if(!c1&&S.cpuPick&&S.cpuPick.id===S.pick[1]){c1=S.cpuPick;if(c1.hidden){const u=loadUnlocked();if(!u.includes(c1.id)){u.push(c1.id);saveUnlocked(u);found=true}
     const at=S.chars.findIndex(c=>!c.builtin);S.chars.splice(at<0?S.chars.length:at,0,c1)}}
-  S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:S.mode==='cpu',cpuLevel:S.cpuLevel,cpuSpecialTurn:2+rnd(2),
+  const LV=S.mode==='cpu'?cpuLvInfo():null;
+  S.match={F:[newFighter(c0),newFighter(c1)],turn:1,history:[],cpu:S.mode==='cpu',cpuLevel:LV?LV.brain:S.cpuLevel,lv:LV,cpuSpecialTurn:2+rnd(2),
     stats:[{mikiri:0,maxCombo:0,specialFinish:false,behind:false},{mikiri:0,maxCombo:0,specialFinish:false,behind:false}],hands:[null,null]};
-  const M=S.match;M.found=found;setFacing(M).then(()=>{if(S.match===M)showPrep()});
+  const M=S.match;M.found=found;if(LV&&LV.hp){M.F[1].maxHp+=LV.hp;M.F[1].hp+=LV.hp}setFacing(M).then(()=>{if(S.match===M)showPrep()});
 }
 const sideTag=(s,M)=>s===0?'1P':(M.cpu?'CPU':'2P');
 function showPrep(){
   const M=S.match;const [A,B]=M.F;
   const card=(f,s)=>`<div class="pcard"><span class="ptag p${s+1}">${sideTag(s,M)}</span><img src="${f.img}" alt=""><div class="nm">${esc(f.ch.name)}</div>${f.ch.alias?`<div class="sp" style="color:#f2c46b">${esc(f.ch.alias)}</div>`:''}<div class="sp">${esc(f.ch.special)}</div><div class="ty">${esc(f.t.n)}・HP${f.maxHp}</div>${starsHTML(f.t)}<div class="sp" data-tut="hands${s}" style="margin-top:3px">${handsText(f.hands)}</div></div>`;
   const d=screen(hdr('決戦前夜')+`<div class="versus">${card(A,0)}<div class="vsmall">VS</div>${card(B,1)}</div>
-    <div class="muted" data-tut="spd" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}が速い：あいこのたびに見切り`}</div>
+    <div class="muted" data-tut="spd" style="text-align:center">入力時間 ${sideTag(0,M)}：${inputTime(A.t.s,B.t.s).toFixed(1)}秒 ／ ${sideTag(1,M)}：${inputTime(B.t.s,A.t.s).toFixed(1)}秒${M.lv?`<br><b class="cpulvtag">CPU Lv.${M.lv.lv}${M.lv.hp?`（HP+${M.lv.hp}）`:''}</b>${S.streak?`　🔥${S.streak}連勝中`:''}`:''}<br>${A.t.s===B.t.s?'すばやさが同じなので、見切りは出ない':`${sideTag(A.t.s>B.t.s?0:1,M)}が速い：あいこのたびに見切り`}</div>
     <div class="spacer"></div>
     <button class="btn orange" data-ok>バトル開始</button>`,'dim');
   bindBack(d,()=>M.tut?(S.match=null,M.tutBack()):showSelect(M.cpu?0:1));
@@ -1111,7 +1121,10 @@ function showResult(){
       if(!ko&&f.hp-L.hp<=40)titles.push('紙一重の覇者');}
     if(!titles.length)titles.push(pick(['サイキョウの証','新たなる覇者','戦場の支配者','不屈の戦士','闘技場の主']));}
   const wf=w>=0?M.F[w]:null;
-  if(!M.recorded){M.recorded=true;recordMatch(M,w,titles.slice(0,2))}
+  let newBest=false;
+  if(!M.recorded){M.recorded=true;recordMatch(M,w,titles.slice(0,2));
+    if(M.cpu&&!M.tut){M.prevStreak=S.streak;if(w===0){S.streak++;if(S.streak>bestStreak()){saveBest(S.streak);newBest=true}}else S.streak=0;M.newBest=newBest}}
+  const streakHTML=M.cpu?(w===0?`<div class="streak">🔥 ${S.streak}連勝${M.newBest?'<small>最高記録！</small>':''}<em>次はCPU Lv.${cpuLvInfo().lv}</em></div>`:(M.prevStreak?`<div class="streak lost">連勝ストップ（${M.prevStreak}連勝）<em>最高記録 ${bestStreak()}連勝</em></div>`:'')):'';
   const mk=M.stats.map(x=>x.mikiri||0);
   const d=screen(`<div class="ribbon ${w===1?'p2':w<0?'draw':''}">${w<0?'相打ち':sideTag(w,M)+' WIN!'}</div>
     <div class="spot">${w>=0?`<img class="win" src="${wf.ch.img}" alt="">`:`<img class="win" src="${A.ch.img}" alt="" style="max-width:45%"><img class="win" src="${B.img}" alt="" style="max-width:45%">`}${w>=0?`<img class="crowd" src="${AS.crowd}" alt="">`:''}</div>
@@ -1119,9 +1132,9 @@ function showResult(){
       <div class="quote">「${esc(winQuote(wf.ch))}」</div>`:''}
     <div class="narr">${esc(narration(M,w))}</div>
     <div class="muted" style="text-align:center">残存HP　${sideTag(0,M)} ${A.hp} ／ ${sideTag(1,M)} ${B.hp}${mk[0]+mk[1]?`<br>見切り　${sideTag(0,M)} ${mk[0]}回 ／ ${sideTag(1,M)} ${mk[1]}回`:''}</div>
-    <button class="btn orange" data-again>⟳ 再戦</button>
+    ${streakHTML}<button class="btn orange" data-again>${M.cpu?(w===0?'⚔ 次の相手へ':'⟳ もう一度挑む'):'⟳ 再戦'}</button>
     <div class="row"><button class="btn blue small" data-change>👤 キャラを変える</button><button class="btn gray small" data-home>ホーム</button></div>`,'');
-  $('[data-again]',d).onclick=()=>startMatch();
+  $('[data-again]',d).onclick=()=>{if(M.cpu){S.cpuPick=randomCpu(S.pick[0]);S.pick[1]=S.cpuPick.id}startMatch()};
   $('[data-change]',d).onclick=()=>showSelect(0);
   $('[data-home]',d).onclick=()=>showHome();
 }
