@@ -269,6 +269,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .hidbadge.onl{background:#1f6fb8}
 .sp.author{color:#9cc2ff;font-size:11px}
 .ccard .arena{font-size:11px;color:#9cc2ff;margin-top:4px;line-height:1.5}.ccard .arena b{color:#ffcf3a}
+.btn.pubdone:disabled{opacity:1;filter:none;background:#2e5a3a;color:#d8f5df;font-size:16px}
 .pubbtn.off{background:#4a4d55;margin-top:4px}
 .pubbtn{margin-top:6px;background:#1f6fb8;color:#fff;border:2px solid var(--line);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;font-weight:700}
 .linkbtn{background:none;border:0;color:#a9a59b;font:inherit;font-size:12px;text-decoration:underline;padding:4px}
@@ -357,7 +358,7 @@ button{font:inherit;color:inherit;cursor:pointer}
    空のままだと、鑑定は「えらぶ方式」になります。
    ============================================================ */
 const KANTEI_ENDPOINT='https://saikyo-kantei.getup117.workers.dev';
-const BUILD_ID='20261105063804';
+const BUILD_ID='20261105064509';
 /* 公開サイトでは、新しい版が出ていたら自動で読み込み直す（スマホのブラウザが古いページを覚えていることがあるため） */
 (function(){if(BUILD_ID==='dev'||!/^https?:$/.test(location.protocol))return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==BUILD_ID&&new URLSearchParams(location.search).get('v')!==v)location.replace(location.pathname+'?v='+encodeURIComponent(v))}).catch(()=>{})})();
@@ -1481,7 +1482,7 @@ function showCreated(ch,onDone){
   const d=screen(hdr('召喚完了',false)+`<div class="spacer"></div><div class="kantei"><div class="spot" style="min-height:200px;flex:none;width:100%"><img class="win" src="${ch.img}" alt=""></div>
     <div style="font-size:22px">${esc(ch.name)}</div>${ch.alias?`<div style="color:#f2c46b">${esc(ch.alias)}</div>`:''}<div class="muted">${esc(st.n)}・HP${hpOf(st)}・${handsText(handsOf(ch))}</div></div>
     <div class="muted" style="text-align:center">キャラ一覧に登録した。このままバトルする？</div><div class="spacer"></div>
-    ${ARENA?'<button class="btn orange" data-pub>🌐 みんなの闘技場に解き放つ</button>':''}
+    ${ARENA?(uploaded()[ch.id]?'<button class="btn gray pubdone" disabled>✅ 公開済み（みんなの闘技場にいる）</button>':'<button class="btn orange" data-pub>🌐 みんなの闘技場に解き放つ</button>'):''}
     <button class="btn blue" data-fight>⚔ このキャラでバトルする</button>
     <div class="row"><button class="btn gray small" data-more>✎ もう1体つくる</button><button class="btn gray small" data-home>トップに戻る</button></div>`,'dim');
   $('[data-fight]',d).onclick=()=>{if(onDone&&onDone.pickSide!=null){const sd=onDone.pickSide;S.pick[sd]=ch.id;if(sd===0)afterP1();else startMatch()}else{S.preset=ch.id;showMode()}};
